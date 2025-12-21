@@ -4,25 +4,38 @@ A modern, dark-mode flashcard application designed for serious study. Features A
 
 ## ✨ Features
 
-### 1. Smart Input & AI Generation 🧠
-- **Classic Import**: Paste CSV data (`TERM,DEFINITION`) to instantly create decks.
-- **AI "Text-to-Deck"**: Paste raw notes, articles, or summaries. The built-in AI (via OpenRouter) extracts key terms and definitions for you.
-- **Auto-Cleaning**: Automatically strips quotes and normalizes text so you don't give away answers.
+### 1. Input & Generation ✍️
+- **AI-Powered Creation**:
+  - **Generate Terms**: Extract terms/definitions from raw notes or articles.
+  - **Smart Context**: Add topics (e.g. "CISSP Domain 1") to guide the AI.
+  - **CSV Support**: Outputs clean `Term,Definition` format.
+- **Robust Editor**: 
+  - Line numbers and scroll syncing.
+  - Supports both Pipe (`|`) and Comma (`,`) delimiters.
+  - **Local API Key**: Your key is stored securely in your browser's local storage (never on our servers).
 
 ### 2. Study Modes 📚
 - **Flashcards**: Beautiful 3D flip animations with shuffle and navigation controls.
 - **Quiz Mode**:
-    - **Bidirectional**: Switch between *"Guess the Term"* and *"Guess the Definition"*.
-    - **AI Distractors**: Toggle this to have the AI invent 3 plausible but **wrong** answers for every question. This allows you to quiz yourself effectively even on small decks (minimum 1 card!).
-    - **Auto Next**: Speed up your flow. Correct answers advance immediately; wrong answers show a 3-second countdown.
+    - **Smart Distractors**: AI generates *plausible but wrong* answers from the same domain.
+    - **Auto Next**: Speed flow optimized.
 - **Match Mode**:
     - A memory game grid with **7 pairs** (14 tiles).
-    - **True Shuffle**: Uses Fisher-Yates algorithm for unbiased randomization every game.
+    - **True Shuffle**: Unbiased randomization every game.
+- **Recall Mode** 🧠:
+    - **Active Recall**: Type the answer manually for maximum retention.
+    - **Progressive Hints** (3-Stage):
+        - Level 1: First 3 letters.
+        - Level 2: First 7 letters.
+        - Level 3: **AI Max Hint** (Vague conceptual clue).
+    - **Smart Grading**: AI scores your answer 0-100% based on meaning.
+    - **"I Don't Know"**: Skip option that marks the card as incorrect (0% score).
+    - **True Randomization**: Uses a shuffled deck system so you see every card once before repeats.
 
 ### 3. Premium UI 🎨
 - **Dark Mode**: sleek `slate-900` theme with violet/indigo accents.
 - **Responsive**: Works on desktop and mobile.
-- **Clean**: No clutter, just focus.
+- **Feature Gating**: Disabling AI cleanly locks advanced features like Recall Mode.
 
 ## 🚀 Getting Started
 

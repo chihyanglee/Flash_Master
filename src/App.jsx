@@ -10,6 +10,9 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // AI State
+  const [aiEnabled, setAiEnabled] = useState(false);
+
   const [mode, setMode] = useState(cards.length > 0 ? 'study' : 'input');
 
   const handleSaveCards = (newCards) => {
@@ -34,9 +37,9 @@ function App() {
 
       <main>
         {mode === 'input' ? (
-          <InputSection onSave={handleSaveCards} />
+          <InputSection onSave={handleSaveCards} onAiEnabledChange={setAiEnabled} initialAiEnabled={aiEnabled} />
         ) : (
-          <StudyDashboard cards={cards} onBack={handleBack} />
+          <StudyDashboard cards={cards} onBack={handleBack} aiEnabled={aiEnabled} />
         )}
       </main>
 
@@ -46,5 +49,6 @@ function App() {
     </div>
   );
 }
+
 
 export default App;

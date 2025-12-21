@@ -1,44 +1,87 @@
-# 🤖 Agent Progress Log
+# 🤖 AI Agent Architecture
 
-This document tracks the development features and enhancements implemented by the AI Assistant for **FlashMaster**.
+FlashMaster uses a multi-agent approach to handle content generation, grading, and distractor creation.
 
-## 📅 Chronological Updates
+## 1. The Generator Agent 🏭
+**Role**: Content Creator  
+**Trigger**: Input Tab -> "Generate Flashcards" or "Generate Terms"  
+**Model**: User Selectable (Default: `google/gemini-2.0-flash-exp:free`) via OpenRouter.
 
-### Phase 1: Foundation 🏗️
-- [x] **Project Scaffolding**: Initialized Vite + React project.
-- [x] **Core Styling**: Created a robust Dark Mode theme using CSS variables (`--bg-dark`, `--accent-primary`).
-- [x] **Basic Components**:
-    - `InputSection`: For CSV parsing.
-    - `FlashcardMode`: Standard flip interactivity.
-    - `StudyDashboard`: Tab creation and state management.
+### Responsibilities
+- **Parsing**: Takes raw user notes (unstructured text).
+- **Extraction**: Identifies key Terms and Definitions.
+- **Formatting**: Outputs strictly in CSV format (`Term,Definition`).
+- **Context Awareness**: Uses the "Optional Context" field to disambiguate terms (e.g. "Virus" in Biology vs "Virus" in Cyber Security).
 
-### Phase 2: Game Modes 🎮
-- [x] **Quiz Mode**:
-    - Implemented multiple-choice logic.
-    - Added score tracking.
-- [x] **Match Mode**:
-    - Built a grid-based memory game.
-    - Implemented selection and matching logic.
+### System Prompt Strategy
+```text
+You are a helpful flashcard generator. extracting key terms and definitions from the user's text.
+CONTEXT: [User Context]
+Your output must be strictly in CSV format: TERM,DEFINITION. One per line.
+Example:
+Apple,A red fruit
+Banana,A yellow fruit
+```
 
-### Phase 3: AI Integration 🧠
-- [x] **OpenRouter Connection**: Securely connected to LLMs via client-side proxy (OpenRouter).
-- [x] **Text-to-Deck**: Enabled users to paste raw text; AI converts it to `TERM,DEFINITION` format.
-- [x] **AI Distractors**:
-    - *Innovation*: Instead of just picking random cards from the deck (which is easy to guess), the AI generates 3 **fake but plausible** answers on the fly.
-    - *Benefit*: Allows quizzing on decks with as few as 1 card.
+---
 
-### Phase 4: Polish & Refinement ✨
-- [x] **Bug Fixing**:
-    - Fixed `position: absolute` CSS layout bug in Quiz Mode.
-    - Fixed infinite re-render loop in Match Mode.
-- [x] **User Requests**:
-    - **Reverse Quiz**: Added toggle for "Term → Def" vs "Def → Term".
-    - **Auto Next**: Added countdown timer (3s) for wrong answers and instant advance for correct ones.
-    - **Sanitization**: Added auto-stripping of quotes (`"`) from imports to prevent answer leaking.
-    - **Randomness**: Upgraded Match Mode to use **Fisher-Yates Shuffle** for true randomness.
-    - **Grid Size**: Optimized Match Mode to show exactly **7 pairs** (14 tiles) per row/game.
+## 2. The Grader Agent 👩‍🏫
+**Role**: Evaluation & Feedback  
+**Trigger**: Recall Mode -> "Submit Answer"  
+**Model**: Lightweight/Fast models preferred.
 
-## 🔮 Future Ideas (Brainstormed)
-- [ ] **Spaced Repetition (SRS)** algorithm.
-- [ ] **Image Generation** for visual learners.
-- [ ] **Export Deck** to JSON/CSV file.
+### Responsibilities
+- **Semantic Analysis**: Compares User Answer vs Correct Answer based on *meaning*, not string equality.
+- **Scoring**: Assigns a 0-100% similarity score.
+- **Feedback**: Provides a 1-sentence explanation of why it was right or wrong.
+- **Resilience**: Features an **Auto-Retry** mechanism (up to 3 attempts) for handling API timeouts, 500 errors, or malformed JSON responses.
+
+### System Prompt Strategy
+```text
+You are a strict study grader. Compare the User Answer to the Correct Answer. 
+Give a similarity score (0-100). If score > 80, mark as CORRECT. 
+Provide brief 1-sentence feedback. 
+Format output as JSON: { "score": number, "correct": boolean, "message": "string" }
+```
+
+---
+
+## 3. The Distractor Agent 🎭
+**Role**: Quiz Difficulty  
+**Trigger**: Quiz Mode -> AI Toggle ON  
+**Model**: Capable Instruction Following models.
+
+### Responsibilities
+- **Generation**: Creates 3 "wrong" answers for every question.
+- **Plausibility**: Must generate terms that exist in the real world (same domain) but are incorrect for the specific question.
+- **Format**: Returns pipe-separated values.
+
+### System Prompt Strategy
+```text
+You are a concise exam creator. I will give you a Term and Definition. 
+Generate 3 "distractor" TERMS that are REAL, VALID industry terms from the SAME domain. 
+Do NOT generate fake terms. 
+Return ONLY the 3 terms separated by pipe symbol "|".
+```
+
+---
+
+## 4. The Hint Agent 💡
+**Role**: Assistance  
+**Trigger**: Recall Mode -> Hint Button (Level 3 / Max Hint)  
+**Model**: Fast Inference.
+
+### Responsibilities
+- **Clue Generation**: specific to Short-Term memory aids.
+- **Constraint**: Must NOT use the answer word itself.
+
+### System Prompt Strategy
+```text
+Give a cryptic, vague, but helpful hint for the answer: "[Answer]". 
+The question/context is: "[Question]". 
+Do NOT reveal the answer word itself. It should guide the user to the answer without giving it away directly. Max 15 words.
+```
+
+## Security & Privacy 🔐
+- **Local Storage**: API Keys are stored in the browser's `localStorage` (`flashcards_api_config`).
+- **Direct Traffic**: Requests go directly from Client -> OpenRouter/OpenAI. No intermediate server.

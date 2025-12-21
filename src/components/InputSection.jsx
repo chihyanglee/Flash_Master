@@ -1,12 +1,54 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
+import { Save, AlertCircle, Sparkles, Loader2, Settings } from 'lucide-react';
 
-export default function InputSection({ onSave }) {
+export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabled }) {
     const [text, setText] = useState('');
+    const [context, setContext] = useState('');
     const [error, setError] = useState(null);
-    const [useAI, setUseAI] = useState(false);
+    const [useAI, setUseAI] = useState(initialAiEnabled || false);
     const [isLoading, setIsLoading] = useState(false);
     const [logs, setLogs] = useState([]);
+
+    // API Config State
+    const [showSettings, setShowSettings] = useState(false);
+    const [apiConfig, setApiConfig] = useState(() => {
+        const saved = localStorage.getItem('flashcards_api_config');
+        return saved ? JSON.parse(saved) : {
+            provider: 'openrouter', // 'openrouter' | 'openai'
+            apiKey: '',
+            model: 'google/gemini-2.0-flash-exp:free'
+        };
+    });
+
+    const updateApiConfig = (newConfig) => {
+        const updated = { ...apiConfig, ...newConfig };
+        setApiConfig(updated);
+        localStorage.setItem('flashcards_api_config', JSON.stringify(updated));
+    };
+
+    // Ensure model and provider are valid on mount
+    useEffect(() => {
+        const validModels = [
+            "openai/gpt-oss-120b",
+            "qwen/qwen3-vl-235b-a22b-instruct",
+            "z-ai/glm-4.5-air",
+            "openai/gpt-5.2-chat",
+            "anthropic/claude-haiku-4.5",
+            "google/gemini-3-flash-preview"
+        ];
+
+        let updates = {};
+        if (apiConfig.provider !== 'openrouter') {
+            updates.provider = 'openrouter';
+        }
+        if (!validModels.includes(apiConfig.model)) {
+            updates.model = validModels[0];
+        }
+
+        if (Object.keys(updates).length > 0) {
+            updateApiConfig(updates);
+        }
+    }, []);
 
     const textareaRef = useRef(null);
     const lineNumbersRef = useRef(null);
@@ -75,27 +117,71 @@ export default function InputSection({ onSave }) {
     };
 
     const generateFlashcards = async () => {
-        const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-        const model = import.meta.env.VITE_OPENROUTER_MODEL || "google/gemini-2.0-flash-exp:free";
-
-        setLogs([]); // Clear previous
-        addLog("Starting process...");
-
-        if (!apiKey || apiKey === 'your_key_here') {
-            setError("Please set VITE_OPENROUTER_API_KEY in your .env file.");
-            addLog("Missing API Key");
-            return;
-        }
-
         if (!text.trim()) {
             setError("Please enter some text to generate cards from.");
             addLog("Empty text");
             return;
         }
 
+        const apiKey = apiConfig.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY;
+        // If still no key and using OpenAI, error. OpenRouter might use free env key.
+        if (!apiKey && apiConfig.provider === 'openai') {
+            setError("Please enter your OpenAI API Key in settings.");
+            setShowSettings(true);
+            return;
+        }
+
+        // Determine URL and Headers based on provider
+        let url, headers, body;
+
+        if (apiConfig.provider === 'openai') {
+            url = "https://api.openai.com/v1/chat/completions";
+            headers = {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+            };
+            body = {
+                model: apiConfig.model,
+                messages: [
+                    {
+                        role: "system",
+                        content: `You are a helpful flashcard generator. extracting key terms and definitions from the user's text. 
+                        ${context ? `CONTEXT: The user is studying "${context}". Use this to ensure definitions are relevant to this topic.` : ''}
+                        Your output must be strictly in CSV format: TERM,DEFINITION. One per line. Do not include markdown code blocks, headers, or any other conversation. Do not number the lines. Example:
+                        Apple,A red fruit
+                        Banana,A yellow fruit`
+                    },
+                    { role: "user", content: text }
+                ]
+            };
+        } else {
+            // OpenRouter (Default)
+            url = "https://openrouter.ai/api/v1/chat/completions";
+            headers = {
+                "Authorization": `Bearer ${apiKey || import.meta.env.VITE_OPENROUTER_API_KEY}`,
+                "HTTP-Referer": window.location.origin,
+                "X-Title": "FlashMaster",
+                "Content-Type": "application/json"
+            };
+            body = {
+                model: apiConfig.model,
+                messages: [
+                    {
+                        role: "system",
+                        content: `You are a helpful flashcard generator. extracting key terms and definitions from the user's text. 
+                        ${context ? `CONTEXT: The user is studying "${context}". Use this to ensure definitions are relevant to this topic.` : ''}
+                        Your output must be strictly in CSV format: TERM,DEFINITION. One per line. Do not include markdown code blocks, headers, or any other conversation. Do not number the lines. Example:
+                        Apple,A red fruit
+                        Banana,A yellow fruit`
+                    },
+                    { role: "user", content: text }
+                ]
+            };
+        }
+
         setIsLoading(true);
         setError(null);
-        addLog("Sending request to OpenRouter...");
+        addLog(`Sending request to ${apiConfig.provider}...`);
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
@@ -104,29 +190,12 @@ export default function InputSection({ onSave }) {
         }, 60000); // Increased to 60s
 
         try {
-            addLog(`Using model: ${model}`);
-            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            addLog(`Using model: ${apiConfig.model}`);
+            const response = await fetch(url, {
                 method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${apiKey}`,
-                    "HTTP-Referer": window.location.origin,
-                    "X-Title": "FlashMaster",
-                    "Content-Type": "application/json"
-                },
+                headers: headers,
                 signal: controller.signal,
-                body: JSON.stringify({
-                    "model": model,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": "You are a helpful flashcard generator. extracting key terms and definitions from the user's text. Your output must be strictly in PIPE-SEPARATED format: TERM|DEFINITION. One per line. Do not include markdown code blocks, headers, or any other conversation. Do not number the lines."
-                        },
-                        {
-                            "role": "user",
-                            "content": text
-                        }
-                    ]
-                })
+                body: JSON.stringify(body)
             });
 
             clearTimeout(timeoutId);
@@ -140,7 +209,11 @@ export default function InputSection({ onSave }) {
                     const errData = JSON.parse(errorText);
                     message = errData.error?.message || message;
                 } catch (e) { /* ignore */ }
-                throw new Error(message);
+
+                if (response.status === 401) {
+                    throw new Error("Invalid API Key. Please check your key in Settings.");
+                }
+                throw new Error(`${message} (Status: ${response.status})`);
             }
 
             const data = await response.json();
@@ -156,7 +229,90 @@ export default function InputSection({ onSave }) {
 
         } catch (err) {
             addLog(`Caught Error: ${err.message}`);
-            setError("AI Generation Failed: " + err.message);
+            if (err.message.includes("Failed to fetch")) {
+                setError("Connection Failed. Do you have a valid API Key in Settings?");
+            } else {
+                setError("AI Generation Failed: " + err.message);
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+    const generateTermsOnly = async () => {
+        if (!context.trim()) {
+            setError("Please enter a topic in the Optional Context box to generate terms (e.g. 'CISSP Domain 1').");
+            return;
+        }
+
+        const apiKey = apiConfig.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY;
+        if (!apiKey && apiConfig.provider === 'openai') {
+            setError("Please enter your OpenAI API Key in settings.");
+            setShowSettings(true);
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+        addLog("Generating terms from context...");
+
+        let url, headers, body;
+        const prompt = `Generate 30 high-quality flashcards for the topic: "${context}". Output strictly in CSV format: TERM,DEFINITION. One per line. Do not number lines. No intro/outro text. Example:
+        Apple,A red fruit
+        Banana,A yellow fruit`;
+
+        if (apiConfig.provider === 'openai') {
+            url = "https://api.openai.com/v1/chat/completions";
+            headers = {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+            };
+            body = {
+                model: apiConfig.model,
+                messages: [{ role: "user", content: prompt }]
+            };
+        } else {
+            url = "https://openrouter.ai/api/v1/chat/completions";
+            headers = {
+                "Authorization": `Bearer ${apiKey || import.meta.env.VITE_OPENROUTER_API_KEY}`,
+                "HTTP-Referer": window.location.origin,
+                "X-Title": "FlashMaster",
+                "Content-Type": "application/json"
+            };
+            body = {
+                model: apiConfig.model,
+                messages: [{ role: "user", content: prompt }]
+            };
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: "POST", headers, body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                if (response.status === 401) {
+                    throw new Error("Invalid API Key. Please check your key in Settings.");
+                }
+                throw new Error(`Generation failed (Status: ${response.status}). ${errorText.substring(0, 100)}`);
+            }
+
+            const data = await response.json();
+            const content = data.choices[0].message.content;
+            const cleanContent = content.replace(/```csv/g, '').replace(/```/g, '').trim();
+
+            setText(cleanContent);
+            addLog("Terms generated!");
+
+        } catch (err) {
+            addLog("Error: " + err.message);
+            if (err.message.includes("Failed to fetch")) {
+                setError("Connection Failed. Do you have a valid API Key in Settings?");
+            } else {
+                setError(err.message);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -174,36 +330,128 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
         <div className="input-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h2 style={{ margin: 0 }}>Flashcard Creator</h2>
-                <label style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    cursor: 'pointer',
-                    background: useAI ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-card)',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '0.5rem',
-                    border: useAI ? '1px solid var(--accent-primary)' : '1px solid var(--border)',
-                    transition: 'all 0.2s'
-                }}>
-                    <input
-                        type="checkbox"
-                        checked={useAI}
-                        onChange={(e) => setUseAI(e.target.checked)}
-                        style={{ accentColor: 'var(--accent-primary)' }}
-                    />
-                    <Sparkles size={16} color={useAI ? 'var(--accent-primary)' : 'var(--text-secondary)'} />
-                    <span style={{ color: useAI ? 'var(--accent-primary)' : 'var(--text-secondary)', fontWeight: 500 }}>
-                        Use AI Generation
-                    </span>
-                </label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                        onClick={() => setShowSettings(!showSettings)}
+                        className="btn-secondary"
+                        style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        title="AI Settings"
+                    >
+                        <Settings size={18} color="white" />
+                        <span style={{ fontSize: '0.9rem' }}>Settings</span>
+                    </button>
+                    <label style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        cursor: 'pointer',
+                        background: useAI ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-card)',
+                        padding: '0.5rem 1rem',
+                        borderRadius: '0.5rem',
+                        border: useAI ? '1px solid var(--accent-primary)' : '1px solid var(--border)',
+                        transition: 'all 0.2s'
+                    }}>
+                        <input
+                            type="checkbox"
+                            checked={useAI}
+                            onChange={(e) => {
+                                const newValue = e.target.checked;
+                                setUseAI(newValue);
+                                if (onAiEnabledChange) onAiEnabledChange(newValue);
+                            }}
+                            style={{ accentColor: 'var(--accent-primary)' }}
+                        />
+                        <Sparkles size={16} color={useAI ? 'var(--accent-primary)' : 'var(--text-secondary)'} />
+                        <span style={{ color: useAI ? 'var(--accent-primary)' : 'var(--text-secondary)', fontWeight: 500 }}>
+                            Use AI Generation
+                        </span>
+                    </label>
+                </div>
             </div>
 
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                {useAI
-                    ? "Paste your raw notes, article, or summary below. AI will extract the terms for you."
-                    : <span>Paste your terms below one per line: <code>TERM,DEFINITION</code></span>
-                }
-            </p>
+            {showSettings && (
+                <div style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '0.5rem',
+                    padding: '1rem',
+                    marginBottom: '1rem',
+                    textAlign: 'left'
+                }}>
+                    <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1rem' }}>AI Configuration</h3>
+
+                    <div style={{ marginBottom: '1rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>API Key (Stored in Browser)</label>
+                        <input
+                            type="password"
+                            value={apiConfig.apiKey}
+                            onChange={(e) => updateApiConfig({ apiKey: e.target.value })}
+                            placeholder="sk-or-..."
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: '0.25rem', background: '#0f172a', color: 'white', border: '1px solid var(--border)' }}
+                        />
+                        <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                            Your key is stored locally in your browser and sent directly to the OpenRouter API.
+                        </p>
+                    </div>
+
+                    <div style={{ marginBottom: '0.5rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Model</label>
+                        <select
+                            value={apiConfig.model}
+                            onChange={(e) => updateApiConfig({ model: e.target.value })}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: '0.25rem', background: '#0f172a', color: 'white', border: '1px solid var(--border)' }}
+                        >
+                            <option value="openai/gpt-oss-120b">GPT OSS 120B</option>
+                            <option value="qwen/qwen3-vl-235b-a22b-instruct">Qwen3 VL 235B</option>
+                            <option value="z-ai/glm-4.5-air">GLM 4.5 Air</option>
+                            <option value="openai/gpt-5.2-chat">GPT 5.2</option>
+                            <option value="anthropic/claude-haiku-4.5">Claude Haiku 4.5</option>
+                            <option value="google/gemini-3-flash-preview">Gemini 3 Flash Preview</option>
+                        </select>
+                    </div>
+                </div>
+            )}
+
+            {useAI && (
+                <div style={{ marginBottom: '1rem' }}>
+                    <input
+                        type="text"
+                        placeholder="Optional Context (e.g. 'CISSP Domain 1', 'Biology 101')"
+                        maxLength={100}
+                        value={context}
+                        onChange={(e) => setContext(e.target.value)}
+                        style={{
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            padding: '0.75rem',
+                            background: 'var(--bg-card)',
+                            border: '1px solid var(--border)',
+                            borderRadius: '0.5rem',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.9rem',
+                            fontFamily: 'var(--font-family)'
+                        }}
+                    />
+                    <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                        {context.length}/100
+                    </div>
+                    <p style={{ color: 'var(--text-secondary)', marginTop: '1rem', marginBottom: '0' }}>
+                        Paste your raw notes, article, or summary below. AI will extract the terms for you.
+                    </p>
+                </div>
+            )}
+
+            {!useAI && (
+                <div style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                    <p style={{ marginBottom: '0.5rem' }}>
+                        <span>Paste your terms below one per line: <code>TERM,DEFINITION</code></span>
+                    </p>
+                    <div style={{ fontSize: '0.85rem', color: 'orange', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        <AlertCircle size={14} />
+                        Note: Disabling AI will disable Recall Mode and distractor generation.
+                    </div>
+                </div>
+            )}
 
             {error && (
                 <div style={{
@@ -278,6 +526,16 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                         </>
                     )}
                 </button>
+                {useAI && (
+                    <button
+                        className="btn-secondary"
+                        onClick={generateTermsOnly}
+                        disabled={isLoading}
+                        style={{ marginLeft: '1rem' }}
+                    >
+                        Generate Terms
+                    </button>
+                )}
             </div>
 
             {isLoading && useAI && (

@@ -335,8 +335,9 @@ export default function QuizMode({ cards: rawCards }) {
                         <button className="btn-secondary" onClick={handleFinish} style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}>
                             Finish & Summary
                         </button>
-                        <button onClick={toggleQuizType} className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} title="Switch Quiz Direction">
+                        <button onClick={toggleQuizType} className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} title="Switch Quiz Direction">
                             <ArrowLeftRight size={14} />
+                            {quizType === 'def-to-term' ? "Quiz: Terms" : "Quiz: Definitions"}
                         </button>
                     </div>
                 </div>
