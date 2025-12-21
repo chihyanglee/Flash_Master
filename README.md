@@ -55,19 +55,16 @@ A modern, dark-mode flashcard application designed for serious study. Features A
    npm install
    ```
 
-3. **Configure Environment**:
-   - Create a file named `.env` in the root folder.
-   - Add your API key:
-     ```env
-     VITE_OPENROUTER_API_KEY=sk-or-your-key-here
-     VITE_OPENROUTER_MODEL=google/gemini-2.0-flash-exp:free
-     ```
-
-4. **Run the App**:
+3. **Run the App**:
    ```bash
    npm run dev
    ```
    Open the link shown (usually `http://localhost:5173`).
+
+4. **Configure API Key**:
+   - Click the **Settings** ⚙️ icon in the top right.
+   - Enter your OpenRouter or OpenAI API Key.
+   - It will be saved securely in your browser.
 
 ## 🛠 Tech Stack
 - **Vite + React**: Blazing fast frontend.
