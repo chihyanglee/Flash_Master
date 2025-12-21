@@ -83,8 +83,9 @@ export default function QuizMode({ cards: rawCards }) {
         if (useAI) {
             setIsLoadingAI(true);
             try {
-                const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-                const model = import.meta.env.VITE_OPENROUTER_MODEL || "google/gemini-2.0-flash-exp:free";
+                const savedConfig = JSON.parse(localStorage.getItem('flashcards_api_config') || '{}');
+                const apiKey = savedConfig.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY;
+                const model = savedConfig.model || import.meta.env.VITE_OPENROUTER_MODEL || "google/gemini-2.0-flash-exp:free";
 
                 if (!apiKey) throw new Error("Missing API Key");
 
@@ -188,8 +189,9 @@ export default function QuizMode({ cards: rawCards }) {
 
         setIsGeneratingSummary(true);
         try {
-            const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
-            const model = import.meta.env.VITE_OPENROUTER_MODEL || "google/gemini-2.0-flash-exp:free";
+            const savedConfig = JSON.parse(localStorage.getItem('flashcards_api_config') || '{}');
+            const apiKey = savedConfig.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY;
+            const model = savedConfig.model || import.meta.env.VITE_OPENROUTER_MODEL || "google/gemini-2.0-flash-exp:free";
 
             // Format history for AI
             const report = history.map((h, i) =>

@@ -7,7 +7,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
     const [error, setError] = useState(null);
     const [useAI, setUseAI] = useState(initialAiEnabled || false);
     const [isLoading, setIsLoading] = useState(false);
-    const [logs, setLogs] = useState([]);
+
 
     // API Config State
     const [showSettings, setShowSettings] = useState(false);
@@ -59,10 +59,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
         }
     };
 
-    const addLog = (msg) => {
-        setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`]);
-        console.log(msg);
-    };
+
 
     const handleSave = () => {
         try {
@@ -119,7 +116,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
     const generateFlashcards = async () => {
         if (!text.trim()) {
             setError("Please enter some text to generate cards from.");
-            addLog("Empty text");
+
             return;
         }
 
@@ -181,16 +178,14 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
 
         setIsLoading(true);
         setError(null);
-        addLog(`Sending request to ${apiConfig.provider}...`);
+
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
             controller.abort();
-            addLog("Request timed out!");
         }, 60000); // Increased to 60s
 
         try {
-            addLog(`Using model: ${apiConfig.model}`);
             const response = await fetch(url, {
                 method: "POST",
                 headers: headers,
@@ -199,11 +194,9 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
             });
 
             clearTimeout(timeoutId);
-            addLog(`Response Status: ${response.status}`);
 
             if (!response.ok) {
                 const errorText = await response.text();
-                addLog(`Error Body: ${errorText.substring(0, 100)}...`);
                 let message = "Failed to fetch";
                 try {
                     const errData = JSON.parse(errorText);
@@ -217,18 +210,14 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
             }
 
             const data = await response.json();
-            addLog("Data received, parsing...");
             const content = data.choices[0].message.content;
 
             // Clean up potential markdown code blocks if the AI disobeyed
             const cleanContent = content.replace(/```csv/g, '').replace(/```/g, '').trim();
-            addLog(`Content length: ${cleanContent.length}`);
 
             parseAndSave(cleanContent);
-            addLog("Done!");
 
         } catch (err) {
-            addLog(`Caught Error: ${err.message}`);
             if (err.message.includes("Failed to fetch")) {
                 setError("Connection Failed. Do you have a valid API Key in Settings?");
             } else {
@@ -255,7 +244,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
 
         setIsLoading(true);
         setError(null);
-        addLog("Generating terms from context...");
+        setError(null);
 
         let url, headers, body;
         const prompt = `Generate 30 high-quality flashcards for the topic: "${context}". Output strictly in CSV format: TERM,DEFINITION. One per line. Do not number lines. No intro/outro text. Example:
@@ -304,10 +293,8 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
             const cleanContent = content.replace(/```csv/g, '').replace(/```/g, '').trim();
 
             setText(cleanContent);
-            addLog("Terms generated!");
 
         } catch (err) {
-            addLog("Error: " + err.message);
             if (err.message.includes("Failed to fetch")) {
                 setError("Connection Failed. Do you have a valid API Key in Settings?");
             } else {
@@ -320,7 +307,20 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
 
     const placeholderCSV = `CIA Triad,Confidentiality Integrity Availability
 AES,Advanced Encryption Standard
-Two-Factor,Something you know plus something you have`;
+Two-Factor,Something you know plus something you have
+
+---
+Welcome to FlashMaster! ⚡
+
+1. Manual Mode (This Screen):
+   - Simply enter your terms and definitions above, comma separated.
+   - Hit "Create Flashcards" to play without AI.
+
+2. AI Power Mode 🤖:
+   - Toggle "Use AI Generation" above.
+   - Fill in the "Optional Context" (e.g., "Biology Ch 1").
+   - Paste raw notes or click "Generate Terms" to get ~50-100 cards instantly.
+   - Enabling AI also unlocks RECALL MODE - the ultimate memory test where you type answers manually!`;
 
     const placeholderAI = `Paste your study notes here! For example:
 
@@ -328,25 +328,24 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
 
     return (
         <div className="input-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2 style={{ margin: 0 }}>Flashcard Creator</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button
                         onClick={() => setShowSettings(!showSettings)}
                         className="btn-secondary"
-                        style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        style={{ padding: '0.375rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
                         title="AI Settings"
                     >
-                        <Settings size={18} color="white" />
-                        <span style={{ fontSize: '0.9rem' }}>Settings</span>
+                        <Settings size={14} color="white" />
+                        <span style={{ fontSize: '0.75rem' }}>Settings</span>
                     </button>
                     <label style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.5rem',
+                        gap: '0.375rem',
                         cursor: 'pointer',
                         background: useAI ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-card)',
-                        padding: '0.5rem 1rem',
+                        padding: '0.375rem 0.75rem',
                         borderRadius: '0.5rem',
                         border: useAI ? '1px solid var(--accent-primary)' : '1px solid var(--border)',
                         transition: 'all 0.2s'
@@ -361,12 +360,18 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                             }}
                             style={{ accentColor: 'var(--accent-primary)' }}
                         />
-                        <Sparkles size={16} color={useAI ? 'var(--accent-primary)' : 'var(--text-secondary)'} />
-                        <span style={{ color: useAI ? 'var(--accent-primary)' : 'var(--text-secondary)', fontWeight: 500 }}>
+                        <Sparkles size={12} color={useAI ? 'var(--accent-primary)' : 'var(--text-secondary)'} />
+                        <span style={{ color: useAI ? 'var(--accent-primary)' : 'var(--text-secondary)', fontWeight: 500, fontSize: '0.75rem' }}>
                             Use AI Generation
                         </span>
                     </label>
                 </div>
+                {!useAI && (
+                    <div style={{ fontSize: '0.7rem', color: 'orange', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.5rem' }}>
+                        <AlertCircle size={12} />
+                        Note: Disabling AI will disable Recall Mode and distractor generation.
+                    </div>
+                )}
             </div>
 
             {showSettings && (
@@ -441,17 +446,11 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                 </div>
             )}
 
-            {!useAI && (
-                <div style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                    <p style={{ marginBottom: '0.5rem' }}>
-                        <span>Paste your terms below one per line: <code>TERM,DEFINITION</code></span>
-                    </p>
-                    <div style={{ fontSize: '0.85rem', color: 'orange', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                        <AlertCircle size={14} />
-                        Note: Disabling AI will disable Recall Mode and distractor generation.
-                    </div>
-                </div>
-            )}
+            <div style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                <p style={{ marginBottom: '0.5rem' }}>
+                    <span>Paste your terms below one per line with comma separation: <code>TERM,DEFINITION</code></span>
+                </p>
+            </div>
 
             {error && (
                 <div style={{
@@ -541,24 +540,6 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
             {isLoading && useAI && (
                 <div style={{ marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem', fontStyle: 'italic' }}>
                     Should take less than 30 seconds to generate all flashcards, depending on how many were added...
-                </div>
-            )}
-
-            {logs.length > 0 && (
-                <div style={{
-                    marginTop: '2rem',
-                    padding: '1rem',
-                    background: 'black',
-                    color: '#00ff00',
-                    fontFamily: 'monospace',
-                    fontSize: '0.8rem',
-                    textAlign: 'left',
-                    borderRadius: '0.5rem',
-                    maxHeight: '200px',
-                    overflowY: 'auto'
-                }}>
-                    <strong>Debug Logs:</strong>
-                    {logs.map((log, i) => <div key={i}>{log}</div>)}
                 </div>
             )}
 
