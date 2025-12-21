@@ -436,12 +436,11 @@ button {
 
   /* Reduce global padding on mobile */
   #root {
-    padding: 0.5rem !important;
+    padding: 0 !important;
   }
 
   .app-main {
-    padding: 0.5rem !important;
-    /* 50% of 1rem */
+    padding: 0.25rem 0.5rem !important;
   }
 
   .input-container {
@@ -708,9 +707,9 @@ button {
   }
 
   .app-header {
-    padding-top: 1rem !important;
-    /* Move logo even higher */
-    margin-bottom: 0.5rem !important;
+    padding-top: 0.1rem !important;
+    /* Move logo aggressively higher */
+    margin-bottom: 0.25rem !important;
   }
 
   .footer-github {
