@@ -275,18 +275,8 @@ export default function RecallMode({ cards }) {
             </div>
 
             {/* Question Card */}
-            <div style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                borderRadius: '1rem',
-                padding: '2rem',
-                marginBottom: '2rem',
-                minHeight: '200px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }}>
+            {/* Question Card */}
+            <div className="recall-card">
                 <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--accent-primary)', marginBottom: '1rem' }}>
                     {mode === 'def-to-term' ? "Definition" : "Term"}
                 </span>

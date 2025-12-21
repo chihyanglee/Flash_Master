@@ -328,9 +328,16 @@ export default function QuizMode({ cards: rawCards }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1rem' }}>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.9rem', fontWeight: '600' }}>
-                        <span style={{ color: 'var(--success)' }}>Correct: {correctCount}</span>
-                        <span style={{ color: 'var(--error)' }}>Wrong: {wrongCount}</span>
+                    <div className="quiz-score">
+                        <span className="score-item correct">
+                            <span className="score-label">Correct: </span>
+                            <span className="score-value">{correctCount}</span>
+                        </span>
+                        <span className="score-separator"> / </span>
+                        <span className="score-item wrong">
+                            <span className="score-label">Wrong: </span>
+                            <span className="score-value">{wrongCount}</span>
+                        </span>
                     </div>
 
                     <div style={{ display: 'flex', gap: '0.5rem' }}>

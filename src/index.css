@@ -209,11 +209,50 @@ button {
 }
 
 .tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   background: transparent;
   color: var(--text-secondary);
   font-size: 1rem;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .app-main {
+    padding-bottom: 80px !important;
+  }
+
+  .tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin-bottom: 0;
+    padding: 0.5rem 0;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    z-index: 100;
+    justify-content: space-evenly;
+    gap: 0;
+  }
+
+  .tab {
+    flex-direction: column;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    border: none;
+    border-radius: 0;
+    gap: 0.25rem;
+  }
+
+  .tab.active {
+    color: var(--accent-primary);
+    background: transparent;
+    /* Remove desktop active bg */
+  }
 }
 
 .tab.active {
@@ -277,4 +316,309 @@ button {
 
 .markdown-content strong {
   color: var(--success);
+}
+
+/* Mobile Optimizations */
+.app-header {
+  margin-bottom: 1.5rem;
+  margin-top: 1rem;
+  position: relative;
+  text-align: center;
+}
+
+.header-github {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  text-decoration: none;
+  color: white;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.6rem;
+}
+
+.header-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: white;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.6rem;
+}
+
+@media (max-width: 640px) {
+  .line-numbers {
+    display: none !important;
+  }
+
+  .app-header {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 3rem;
+  }
+
+  /* Position buttons in corners or top row on mobile */
+  .header-github {
+    position: absolute;
+    top: 0;
+    right: 0;
+    order: 0;
+    align-self: auto;
+    margin-bottom: 0;
+  }
+
+  .header-back {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin-bottom: 0;
+  }
+
+  /* Compact button for mobile */
+  .btn-primary {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .input-area {
+    font-size: 16px;
+    /* Prevent IOS zoom on focus */
+  }
+
+  /* Mobile Action Bar Optimizations */
+  .action-bar {
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: nowrap !important;
+    /* Force one row */
+    gap: 0.25rem !important;
+  }
+
+  .help-btn .btn-text {
+    display: none;
+    /* Icon only for help */
+  }
+
+  .action-btn {
+    padding: 0.3rem 0.5rem !important;
+  }
+
+  .action-btn .btn-text {
+    font-size: 0.7rem;
+  }
+
+  .ai-toggle {
+    padding: 0.3rem 0.5rem !important;
+    font-size: 0.7rem !important;
+  }
+
+  .ai-label {
+    font-size: 0.7rem !important;
+  }
+
+  /* Reduce global padding on mobile */
+  #root {
+    padding: 1rem !important;
+    /* 50% of 2rem */
+  }
+
+  .app-main {
+    padding: 0.5rem !important;
+    /* 50% of 1rem */
+  }
+
+  .input-container {
+    padding: 0 0.5rem !important;
+    /* 50% of 1rem side padding */
+  }
+}
+
+/* Action Bar Styles (Desktop Base) */
+.action-bar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  width: 100%;
+  /* Ensure it spans full width so 'margin-right: auto' can push items left */
+}
+
+.action-btn {
+  padding: 0.375rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--text-primary);
+}
+
+.action-btn svg {
+  color: white;
+}
+
+/* Only set specific button text color if needed, otherwise inherit */
+.btn-text {
+  font-size: 0.75rem;
+}
+
+.ai-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  cursor: pointer;
+  background: var(--bg-card);
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.ai-toggle.active {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: var(--accent-primary);
+}
+
+.ai-toggle input {
+  accent-color: var(--accent-primary);
+}
+
+.ai-icon {
+  color: var(--text-secondary);
+}
+
+.ai-toggle.active .ai-icon {
+  color: var(--accent-primary);
+}
+
+.ai-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.ai-toggle.active .ai-label {
+  color: var(--accent-primary);
+}
+
+/* App Main Container */
+.app-main {
+  min-height: 100vh;
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Input Section Container */
+.input-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.help-btn {
+  margin-right: auto;
+}
+
+/* Mobile Bottom Nav Overrides (Moved to end for precendence) */
+@media (max-width: 640px) {
+  .app-main {
+    padding-bottom: 80px !important;
+  }
+
+  .tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin-bottom: 0;
+    padding: 0.5rem 0;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    z-index: 100;
+    justify-content: space-evenly;
+    gap: 0;
+  }
+
+  .tab {
+    flex-direction: column;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    border: none;
+    border-radius: 0;
+    gap: 0.25rem;
+  }
+
+  .tab.active {
+    color: var(--accent-primary) !important;
+    background: transparent !important;
+  }
+}
+
+/* Quiz Score Styles */
+.quiz-score {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.score-item.correct {
+  color: var(--success);
+}
+
+.score-item.wrong {
+  color: var(--error);
+}
+
+.score-separator {
+  display: none;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+/* Mobile Score Compact View */
+@media (max-width: 640px) {
+  .quiz-score {
+    gap: 0.5rem;
+  }
+
+  .score-label {
+    display: none;
+  }
+
+  .score-separator {
+    display: inline;
+  }
+}
+
+/* Recall Mode Card Styles */
+.recall-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 640px) {
+  .recall-card {
+    min-height: 150px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
 }

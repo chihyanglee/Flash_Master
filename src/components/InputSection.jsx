@@ -1,13 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, AlertCircle, Sparkles, Loader2, Settings } from 'lucide-react';
+import { Save, AlertCircle, Sparkles, Loader2, Settings, HelpCircle, Trash2 } from 'lucide-react';
 
 export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabled }) {
-    const [text, setText] = useState('');
-    const [context, setContext] = useState('');
+    // Load from local storage or default to empty
+    const [text, setText] = useState(() => localStorage.getItem('flashcards_input_text') || '');
+    const [context, setContext] = useState(() => localStorage.getItem('flashcards_input_context') || '');
+
     const [error, setError] = useState(null);
     const [useAI, setUseAI] = useState(initialAiEnabled || false);
     const [isLoading, setIsLoading] = useState(false);
+    const [showHelp, setShowHelp] = useState(false);
 
+    // Save to local storage whenever text or context changes
+    useEffect(() => {
+        localStorage.setItem('flashcards_input_text', text);
+    }, [text]);
+
+    useEffect(() => {
+        localStorage.setItem('flashcards_input_context', context);
+    }, [context]);
 
     // API Config State
     const [showSettings, setShowSettings] = useState(false);
@@ -24,6 +35,15 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
         const updated = { ...apiConfig, ...newConfig };
         setApiConfig(updated);
         localStorage.setItem('flashcards_api_config', JSON.stringify(updated));
+    };
+
+    const handleClear = () => {
+        if (window.confirm("Are you sure you want to clear all text and context?")) {
+            setText('');
+            setContext('');
+            localStorage.removeItem('flashcards_input_text');
+            localStorage.removeItem('flashcards_input_context');
+        }
     };
 
     // Ensure model and provider are valid on mount
@@ -58,8 +78,6 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
             lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
         }
     };
-
-
 
     const handleSave = () => {
         try {
@@ -116,7 +134,6 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
     const generateFlashcards = async () => {
         if (!text.trim()) {
             setError("Please enter some text to generate cards from.");
-
             return;
         }
 
@@ -179,7 +196,6 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
         setIsLoading(true);
         setError(null);
 
-
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
             controller.abort();
@@ -228,7 +244,6 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
         }
     };
 
-
     const generateTermsOnly = async () => {
         if (!context.trim()) {
             setError("Please enter a topic in the Optional Context box to generate terms (e.g. 'CISSP Domain 1').");
@@ -243,7 +258,6 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
         }
 
         setIsLoading(true);
-        setError(null);
         setError(null);
 
         let url, headers, body;
@@ -307,49 +321,46 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
 
     const placeholderCSV = `CIA Triad,Confidentiality Integrity Availability
 AES,Advanced Encryption Standard
-Two-Factor,Something you know plus something you have
-
----
-Welcome to FlashMaster! ⚡
-
-1. Manual Mode (This Screen):
-   - Simply enter your terms and definitions above, comma separated.
-   - Hit "Create Flashcards" to play without AI.
-
-2. AI Power Mode 🤖:
-   - Toggle "Use AI Generation" above.
-   - Fill in the "Optional Context" (e.g., "Biology Ch 1").
-   - Paste raw notes or click "Generate Terms" to get ~50-100 cards instantly.
-   - Enabling AI also unlocks RECALL MODE - the ultimate memory test where you type answers manually!`;
+Two-Factor,Something you know plus something you have`;
 
     const placeholderAI = `Paste your study notes here! For example:
 
 Security models are critical for CISSP. The Bell-LaPadula model focuses on confidentiality and has the 'No Read Up, No Write Down' rule. Biba, on the other hand, focuses on integrity.`;
 
+    const guideText = `Welcome to FlashMaster! ⚡
+
+1. Manual Mode:
+   - Simply enter your terms and definitions in the box, comma separated.
+   - Example: Term,Definition
+   - Hit "Create Flashcards" to play without AI.
+
+2. AI Power Mode 🤖:
+   - Toggle "Use AI Generation".
+   - Fill in the "Optional Context" (e.g., "Biology Ch 1").
+   - Paste raw notes or click "Generate Terms" to get ~50-100 cards instantly.
+   - Enabling AI also unlocks RECALL MODE - the ultimate memory test!`;
+
     return (
-        <div className="input-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div className="input-container">
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className="action-bar">
+                    <button
+                        onClick={() => setShowHelp(true)}
+                        className="btn-secondary action-btn help-btn"
+                        title="How to use"
+                    >
+                        <HelpCircle size={14} />
+                        <span className="btn-text">Help</span>
+                    </button>
                     <button
                         onClick={() => setShowSettings(!showSettings)}
-                        className="btn-secondary"
-                        style={{ padding: '0.375rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}
+                        className="btn-secondary action-btn"
                         title="AI Settings"
                     >
-                        <Settings size={14} color="white" />
-                        <span style={{ fontSize: '0.75rem' }}>Settings</span>
+                        <Settings size={14} />
+                        <span className="btn-text">Settings</span>
                     </button>
-                    <label style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.375rem',
-                        cursor: 'pointer',
-                        background: useAI ? 'rgba(139, 92, 246, 0.2)' : 'var(--bg-card)',
-                        padding: '0.375rem 0.75rem',
-                        borderRadius: '0.5rem',
-                        border: useAI ? '1px solid var(--accent-primary)' : '1px solid var(--border)',
-                        transition: 'all 0.2s'
-                    }}>
+                    <label className={`ai-toggle ${useAI ? 'active' : ''}`}>
                         <input
                             type="checkbox"
                             checked={useAI}
@@ -358,10 +369,9 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                                 setUseAI(newValue);
                                 if (onAiEnabledChange) onAiEnabledChange(newValue);
                             }}
-                            style={{ accentColor: 'var(--accent-primary)' }}
                         />
-                        <Sparkles size={12} color={useAI ? 'var(--accent-primary)' : 'var(--text-secondary)'} />
-                        <span style={{ color: useAI ? 'var(--accent-primary)' : 'var(--text-secondary)', fontWeight: 500, fontSize: '0.75rem' }}>
+                        <Sparkles size={12} className="ai-icon" />
+                        <span className="ai-label">
                             Use AI Generation
                         </span>
                     </label>
@@ -373,6 +383,54 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                     </div>
                 )}
             </div>
+
+            {/* Help Modal */}
+            {showHelp && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.8)', zIndex: 1000,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+                }}>
+                    <div style={{
+                        background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem',
+                        maxWidth: '500px', width: '100%', border: '1px solid var(--border)',
+                        position: 'relative', maxHeight: '90vh', overflowY: 'auto'
+                    }}>
+                        <h3 style={{ marginTop: 0 }}>How to Use FlashMaster</h3>
+                        <div style={{ lineHeight: 1.6, color: 'var(--text-secondary)', textAlign: 'left' }}>
+                            <p style={{ marginBottom: '1.5rem' }}>
+                                FlashMaster is designed to help you study efficiently using custom flashcards, quizzes, and matching games.
+                            </p>
+
+                            <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1rem' }}>1. Manual Mode</h4>
+                            <ul style={{ paddingLeft: '1.5rem', marginBottom: '1.5rem', marginTop: 0 }}>
+                                <li><strong>Input Format:</strong> Enter one term and definition per line, separated by a comma (or pipe `|`).</li>
+                                <li><strong>Example:</strong> <code>Term, Definition</code></li>
+                                <li><strong>Start:</strong> Click "Create Flashcards" to begin studying immediately.</li>
+                            </ul>
+
+                            <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1rem' }}>2. AI Generation Mode</h4>
+                            <p style={{ marginBottom: '0.5rem' }}>
+                                Leverage AI to automatically generate study materials from raw text.
+                            </p>
+                            <ul style={{ paddingLeft: '1.5rem', marginBottom: '0', marginTop: 0 }}>
+                                <li><strong>Enable:</strong> Toggle the "Use AI Generation" switch at the top.</li>
+                                <li><strong>Context:</strong> Optionally add a subject (e.g., "CISSP Domain 1") to guide the generation.</li>
+                                <li><strong>Input:</strong> Paste your notes, identifiers, or summary text into the main text area.</li>
+                                <li><strong>Generate:</strong> Click "Generate Terms" to populate the list for review, or "Generate & Play" to start immediately.</li>
+                                <li><strong>Recall Mode:</strong> Enabling AI unlocks Recall Mode, a more advanced testing method.</li>
+                            </ul>
+                        </div>
+                        <button
+                            className="btn-primary"
+                            style={{ marginTop: '2rem', width: '100%' }}
+                            onClick={() => setShowHelp(false)}
+                        >
+                            Got it!
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {showSettings && (
                 <div style={{
@@ -472,6 +530,7 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
             <div style={{ position: 'relative', display: 'flex', border: '1px solid var(--border)', borderRadius: '0.75rem', overflow: 'hidden', minHeight: '300px', background: 'var(--bg-card)' }}>
                 <div
                     ref={lineNumbersRef}
+                    className="line-numbers"
                     style={{
                         padding: '1rem 0.5rem',
                         background: '#0f172a',
@@ -511,30 +570,41 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                 />
             </div>
 
-            <div style={{ marginTop: '1rem', textAlign: 'right' }}>
-                <button className="btn-primary" onClick={handleSave} disabled={isLoading}>
-                    {isLoading ? (
-                        <>
-                            <Loader2 size={18} className="spin" style={{ marginRight: '0.5rem', verticalAlign: 'middle', animation: 'spin 1s linear infinite' }} />
-                            Generating...
-                        </>
-                    ) : (
-                        <>
-                            {useAI ? <Sparkles size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} /> : <Save size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />}
-                            {useAI ? "Generate & Play" : "Create Flashcards"}
-                        </>
-                    )}
+            <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <button
+                    className="btn-secondary"
+                    onClick={handleClear}
+                    style={{ color: '#ef4444', borderColor: '#ef4444', padding: '0.5rem 1rem' }}
+                    title="Clear all text"
+                >
+                    <Trash2 size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
+                    Clear
                 </button>
-                {useAI && (
-                    <button
-                        className="btn-secondary"
-                        onClick={generateTermsOnly}
-                        disabled={isLoading}
-                        style={{ marginLeft: '1rem' }}
-                    >
-                        Generate Terms
+
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'flex-end', flex: 1 }}>
+                    {useAI && (
+                        <button
+                            className="btn-secondary"
+                            onClick={generateTermsOnly}
+                            disabled={isLoading}
+                        >
+                            Generate Terms
+                        </button>
+                    )}
+                    <button className="btn-primary" onClick={handleSave} disabled={isLoading}>
+                        {isLoading ? (
+                            <>
+                                <Loader2 size={18} className="spin" style={{ marginRight: '0.5rem', verticalAlign: 'middle', animation: 'spin 1s linear infinite' }} />
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                {useAI ? <Sparkles size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} /> : <Save size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />}
+                                {useAI ? "Generate & Play" : "Create Flashcards"}
+                            </>
+                        )}
                     </button>
-                )}
+                </div>
             </div>
 
             {isLoading && useAI && (
@@ -544,11 +614,11 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
             )}
 
             <style>{`
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-      `}</style>
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+          `}</style>
         </div>
     );
 }
