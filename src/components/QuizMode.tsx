@@ -1,58 +1,74 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle, XCircle, ArrowRight, RefreshCcw, Sparkles, Loader2, AlertCircle, ArrowLeftRight, FastForward } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { CheckCircle, XCircle, ArrowRight, Sparkles, Loader2, AlertCircle, ArrowLeftRight, FastForward } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import type { QuizModeProps, QuizType, QuizOption, QuizHistoryEntry, ScenarioData, Flashcard, APIConfig, ChatCompletionResponse } from '../types';
 
-export default function QuizMode({ cards: rawCards }) {
-    const cards = React.useMemo(() => {
-        const clean = (s) => (s && typeof s === 'string') ? s.trim().replace(/^(['"])(.*)\1$/, '$2') : s;
+export default function QuizMode({ cards: rawCards }: QuizModeProps) {
+    const cards: Flashcard[] = useMemo(() => {
+        const clean = (s: string | undefined): string => (s && typeof s === 'string') ? s.trim().replace(/^(['"])(.*)\1$/, '$2') : '';
         return rawCards ? rawCards.map(c => ({ ...c, term: clean(c.term), definition: clean(c.definition) })) : [];
     }, [rawCards]);
 
     // Game State
-    const [currentCard, setCurrentCard] = useState(null);
-    const [options, setOptions] = useState([]);
-    const [selectedOption, setSelectedOption] = useState(null);
-    const [view, setView] = useState('question'); // 'question' | 'feedback'
-    const [questionQueue, setQuestionQueue] = useState([]);
+    const [currentCard, setCurrentCard] = useState<Flashcard | null>(null);
+    const [options, setOptions] = useState<QuizOption[]>([]);
+    const [selectedOption, setSelectedOption] = useState<QuizOption | null>(null);
+    const [view, setView] = useState<'question' | 'feedback'>('question');
+    const [questionQueue, setQuestionQueue] = useState<number[]>([]);
 
     // Scoring & History
     const [correctCount, setCorrectCount] = useState(0);
     const [wrongCount, setWrongCount] = useState(0);
-    const [history, setHistory] = useState([]); // { term, definition, questionType, answeredCorrectly, userAnswer }
+    const [history, setHistory] = useState<QuizHistoryEntry[]>([]);
 
     // Summary State
     const [showSummary, setShowSummary] = useState(false);
     const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-    const [summaryText, setSummaryText] = useState(null);
+    const [summaryText, setSummaryText] = useState<string | null>(null);
 
     // Settings
     const [useAI, setUseAI] = useState(false);
-    const [quizType, setQuizType] = useState('def-to-term'); // 'def-to-term' | 'term-to-def' | 'scenario'
+    const [quizType, setQuizType] = useState<QuizType>('def-to-term');
     const [autoNext, setAutoNext] = useState(false);
 
     // Scenario Specific State
     const [isScenarioActive, setIsScenarioActive] = useState(false);
     const [difficulty, setDifficulty] = useState(2); // 1: Easy, 2: Medium, 3: Hard
     const [scenarioContext, setScenarioContext] = useState("");
-    const [scenarioData, setScenarioData] = useState(null); // { scenario, question, explanation }
+    const [scenarioData, setScenarioData] = useState<ScenarioData | null>(null);
 
     // Async/Timer State
     const [isLoadingAI, setIsLoadingAI] = useState(false);
-    const [aiError, setAiError] = useState(null);
-    const [countdown, setCountdown] = useState(null);
-    const nextTimerRef = useRef(null);
+    const [aiError, setAiError] = useState<string | null>(null);
+    const [countdown, setCountdown] = useState<number | null>(null);
+    const nextTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const shuffle = (array) => {
-        let currentIndex = array.length, randomIndex;
-        // While there remain elements to shuffle.
+    const shuffle = <T,>(array: T[]): T[] => {
+        const newArray = [...array];
+        let currentIndex = newArray.length, randomIndex;
         while (currentIndex !== 0) {
-            // Pick a remaining element.
             randomIndex = Math.floor(Math.random() * currentIndex);
             currentIndex--;
-            // And swap it with the current element.
-            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            [newArray[currentIndex], newArray[randomIndex]] = [newArray[randomIndex], newArray[currentIndex]];
         }
-        return array;
+        return newArray;
+    };
+
+    const generateStandardOptions = (targetCard: Flashcard) => {
+        const distractors: Flashcard[] = [];
+        if (cards.length < 4) return;
+        while (distractors.length < 3) {
+            const c = cards[Math.floor(Math.random() * cards.length)];
+            if (c.id !== targetCard.id && !distractors.find(d => d.id === c.id)) {
+                distractors.push(c);
+            }
+        }
+        const allCandidates = [targetCard, ...distractors];
+        const formattedOptions: QuizOption[] = allCandidates.map(c => ({
+            ...c,
+            label: quizType === 'def-to-term' ? c.term : c.definition
+        }));
+        setOptions(shuffle(formattedOptions));
     };
 
     const generateQuestion = async () => {
@@ -62,7 +78,6 @@ export default function QuizMode({ cards: rawCards }) {
         if (!cards || (!useAI && cards.length < 4)) return;
 
         // Manage Queue
-        let nextCard;
         let newQueue = [...questionQueue];
 
         if (newQueue.length === 0) {
@@ -75,7 +90,7 @@ export default function QuizMode({ cards: rawCards }) {
             newQueue = indices;
         }
 
-        const nextIndex = newQueue.pop();
+        const nextIndex = newQueue.pop()!;
         setQuestionQueue(newQueue);
         const randomCard = cards[nextIndex];
 
@@ -94,20 +109,18 @@ export default function QuizMode({ cards: rawCards }) {
         if (useAI) {
             setIsLoadingAI(true);
             try {
-                const savedConfig = JSON.parse(localStorage.getItem('flashcards_api_config') || '{}');
+                const savedConfig = JSON.parse(localStorage.getItem('flashcards_api_config') || '{}') as Partial<APIConfig>;
                 const apiKey = savedConfig.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY;
                 const model = savedConfig.model || import.meta.env.VITE_OPENROUTER_MODEL || "google/gemini-2.0-flash-exp:free";
 
                 if (!apiKey) throw new Error("Missing API Key");
 
                 let systemPrompt = "";
-                let userPrompt = `Term: ${randomCard.term}\nDefinition: ${randomCard.definition}`;
+                const userPrompt = `Term: ${randomCard.term}\nDefinition: ${randomCard.definition}`;
 
                 if (questionIsDef) {
-                    // REFINED MODE: Real, distinct concepts from the same domain
                     systemPrompt = `You are a concise exam creator. I will give you a Term and Definition. Generate 3 "distractor" TERMS that are REAL, VALID industry terms from the SAME domain. Do NOT generate fake terms. Do NOT generate terms that are chemically similar to the answer (e.g. if answer is "SaaS", don't just say "SaaS V2"). Give distinct concepts that a student might confuse (e.g. if answer is "Phishing", give "Vishing" or "Whaling"). Return ONLY the 3 terms separated by pipe symbol "|". No labeling.`;
                 } else {
-                    // REFINED MODE: Distinct definitions of related concepts
                     systemPrompt = `You are a concise exam creator. I will give you a Term and Definition. Generate 3 "distractor" DEFINITIONS. IMPORTANT: Do NOT just tweak the correct definition by one word. Instead, write valid definitions for DIFFERENT concepts that belong to the same category. (e.g. If the term is "Symmetric Key", descibe "Public Key" or "Hashing" as the distractors). The distractors must be plausible because they describe real things, but they are WRONG for this specific term. Return ONLY the 3 definitions separated by pipe symbol "|". No labeling.`;
                 }
 
@@ -130,11 +143,11 @@ export default function QuizMode({ cards: rawCards }) {
 
                 if (!response.ok) throw new Error("AI Fetch Failed");
 
-                const data = await response.json();
+                const data: ChatCompletionResponse = await response.json();
                 const content = data.choices[0].message.content.trim();
                 const distractorTexts = content.split('|').map(t => t.trim());
 
-                const distractorOptions = distractorTexts.slice(0, 3).map((text, i) => ({
+                const distractorOptions: QuizOption[] = distractorTexts.slice(0, 3).map((text, i) => ({
                     id: `ai-distractor-${i}`,
                     term: questionIsDef ? text : randomCard.term,
                     definition: !questionIsDef ? text : randomCard.definition,
@@ -142,7 +155,7 @@ export default function QuizMode({ cards: rawCards }) {
                     isDistractor: true
                 }));
 
-                const correctOption = {
+                const correctOption: QuizOption = {
                     ...randomCard,
                     label: questionIsDef ? randomCard.term : randomCard.definition,
                     isDistractor: false
@@ -164,7 +177,7 @@ export default function QuizMode({ cards: rawCards }) {
 
             } catch (err) {
                 console.error(err);
-                setAiError("AI failed, falling back to deck.");
+                setAiError("AI 失敗，改用卡片組。");
                 generateStandardOptions(randomCard);
             } finally {
                 setIsLoadingAI(false);
@@ -174,23 +187,6 @@ export default function QuizMode({ cards: rawCards }) {
         }
     };
 
-    const generateStandardOptions = (targetCard) => {
-        const distractors = [];
-        if (cards.length < 4) return;
-        while (distractors.length < 3) {
-            const c = cards[Math.floor(Math.random() * cards.length)];
-            if (c.id !== targetCard.id && !distractors.find(d => d.id === c.id)) {
-                distractors.push(c);
-            }
-        }
-        const allCandidates = [targetCard, ...distractors];
-        const formattedOptions = allCandidates.map(c => ({
-            ...c,
-            label: quizType === 'def-to-term' ? c.term : c.definition
-        }));
-        setOptions(shuffle(formattedOptions));
-    };
-
     const generateScenarioQuestion = async () => {
         if (nextTimerRef.current) clearTimeout(nextTimerRef.current);
         setCountdown(null);
@@ -198,7 +194,7 @@ export default function QuizMode({ cards: rawCards }) {
         setIsLoadingAI(true);
 
         try {
-            const savedConfig = JSON.parse(localStorage.getItem('flashcards_api_config') || '{}');
+            const savedConfig = JSON.parse(localStorage.getItem('flashcards_api_config') || '{}') as Partial<APIConfig>;
             const apiKey = savedConfig.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY;
             const model = savedConfig.model || import.meta.env.VITE_OPENROUTER_MODEL || "google/gemini-2.0-flash-exp:free";
 
@@ -211,16 +207,16 @@ export default function QuizMode({ cards: rawCards }) {
 
             const systemPrompt = `You are an expert exam creator. Develop a scenario-based question.
             Difficulty: ${diffLabel}.
-            
+
             USER CONTEXT (PRIORITY): ${scenarioContext || "None provided"}.
-            
+
             INSTRUCTIONS:
             - THEMATIC FOCUS: Identify the single most relevant concept from the terms provided.
             - REALISM: Create a scenario that describes one specific, realistic business or technical situation.
             - PREVENT DISJOINTEDNESS: Never force-link unrelated terms. If "Fire Suppression" and "Data Encryption" are both provided, PICK ONLY ONE to build the scenario around. Do not create scenarios where multiple unrelated events happen at the same time.
             - COHESION: The story must have a single logical arc. The question at the end must flow naturally from the context provided in the first two sentences.
             - If USER CONTEXT is provided, it MUST be the primary setting for this single-topic scenario.
-            
+
             CONSTRAINTS:
             - Text: Write a single cohesive paragraph (max 3 sentences AND max 50 words total).
             - 4 options.
@@ -246,21 +242,23 @@ export default function QuizMode({ cards: rawCards }) {
             });
 
             if (!response.ok) throw new Error("AI Fetch Failed");
-            const data = await response.json();
-            const content = JSON.parse(data.choices[0].message.content);
+            const data: ChatCompletionResponse = await response.json();
+            const content: ScenarioData = JSON.parse(data.choices[0].message.content);
 
             setScenarioData(content);
             setCurrentCard({ id: 'scenario-placeholder', term: 'Scenario Question', definition: content.text });
             setOptions(content.options.map((opt, i) => ({
                 id: `scenario-opt-${i}`,
+                term: '',
+                definition: '',
                 label: opt,
                 isCorrect: i === content.correctIndex
             })));
             setSelectedOption(null);
             setView('question');
 
-        } catch (err) {
-            setAiError("Scenario failed. Check API key.");
+        } catch {
+            setAiError("情境產生失敗，請檢查 API 金鑰。");
             setIsScenarioActive(false);
         } finally {
             setIsLoadingAI(false);
@@ -270,13 +268,13 @@ export default function QuizMode({ cards: rawCards }) {
     const handleFinish = async () => {
         setShowSummary(true);
         if (history.length === 0) {
-            setSummaryText("No questions answered yet!");
+            setSummaryText("尚未回答任何問題！");
             return;
         }
 
         setIsGeneratingSummary(true);
         try {
-            const savedConfig = JSON.parse(localStorage.getItem('flashcards_api_config') || '{}');
+            const savedConfig = JSON.parse(localStorage.getItem('flashcards_api_config') || '{}') as Partial<APIConfig>;
             const apiKey = savedConfig.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY;
             const model = savedConfig.model || import.meta.env.VITE_OPENROUTER_MODEL || "google/gemini-2.0-flash-exp:free";
 
@@ -302,11 +300,11 @@ export default function QuizMode({ cards: rawCards }) {
                 })
             });
 
-            const data = await response.json();
+            const data: ChatCompletionResponse = await response.json();
             setSummaryText(data.choices[0].message.content);
 
-        } catch (err) {
-            setSummaryText("Failed to generate AI summary. Ensure your API Key is set.");
+        } catch {
+            setSummaryText("無法產生 AI 總結，請確認已設定 API 金鑰。");
         } finally {
             setIsGeneratingSummary(false);
         }
@@ -317,20 +315,22 @@ export default function QuizMode({ cards: rawCards }) {
             generateQuestion();
         }
         return () => { if (nextTimerRef.current) clearTimeout(nextTimerRef.current); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [quizType, cards, useAI]);
 
     // Countdown
     useEffect(() => {
         if (countdown === null) return;
         if (countdown > 0) {
-            const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+            const timer = setTimeout(() => setCountdown(c => (c !== null ? c - 1 : null)), 1000);
             return () => clearTimeout(timer);
         } else {
             generateQuestion();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [countdown]);
 
-    const handleOptionClick = (option) => {
+    const handleOptionClick = (option: QuizOption) => {
         if (view === 'feedback' || isLoadingAI) return;
 
         setSelectedOption(option);
@@ -338,7 +338,7 @@ export default function QuizMode({ cards: rawCards }) {
 
         const isCorrect = quizType === 'scenario'
             ? option.isCorrect
-            : option.id === currentCard.id && !option.isDistractor;
+            : option.id === currentCard?.id && !option.isDistractor;
 
         if (isCorrect) {
             setCorrectCount(p => p + 1);
@@ -348,10 +348,10 @@ export default function QuizMode({ cards: rawCards }) {
 
         // Record History
         setHistory(prev => [...prev, {
-            term: quizType === 'scenario' ? 'Scenario' : currentCard.term,
-            definition: quizType === 'scenario' ? scenarioData.text : currentCard.definition,
+            term: quizType === 'scenario' ? 'Scenario' : (currentCard?.term || ''),
+            definition: quizType === 'scenario' ? (scenarioData?.text || '') : (currentCard?.definition || ''),
             questionType: quizType,
-            answeredCorrectly: isCorrect,
+            answeredCorrectly: !!isCorrect,
             userAnswer: option.label
         }]);
 
@@ -379,7 +379,7 @@ export default function QuizMode({ cards: rawCards }) {
     };
 
     if (!cards || (!useAI && cards.length < 4)) {
-        return <div style={{ padding: '2rem' }}>Not enough cards.</div>; // Simplified error state
+        return <div style={{ padding: '2rem' }}>卡片數量不足。</div>;
     }
 
     const headerText = quizType === 'scenario'
@@ -390,7 +390,7 @@ export default function QuizMode({ cards: rawCards }) {
                     display: 'block', marginBottom: '0.75rem', fontSize: '1.1rem',
                     textTransform: 'uppercase', letterSpacing: '0.1em'
                 }}>
-                    {selectedOption?.isCorrect ? 'Correct' : 'Incorrect'}
+                    {selectedOption?.isCorrect ? '正確' : '錯誤'}
                 </strong>
                 <span style={{ display: 'block', fontSize: '1.1rem', lineHeight: '1.6' }}>{scenarioData.rationale}</span>
             </div>
@@ -403,26 +403,26 @@ export default function QuizMode({ cards: rawCards }) {
         return (
             <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
                 <button className="btn-secondary" onClick={() => setShowSummary(false)} style={{ marginBottom: '1rem' }}>
-                    &larr; Back to Quiz
+                    &larr; 返回測驗
                 </button>
                 <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
                     <h2 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Sparkles color="var(--accent-primary)" /> AI Session Summary
+                        <Sparkles color="var(--accent-primary)" /> AI 學習總結
                     </h2>
                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '0.5rem' }}>
-                        <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>Correct: {correctCount}</span>
-                        <span style={{ color: 'var(--error)', fontWeight: 'bold' }}>Wrong: {wrongCount}</span>
-                        <span>Total: {history.length}</span>
+                        <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>正確：{correctCount}</span>
+                        <span style={{ color: 'var(--error)', fontWeight: 'bold' }}>錯誤：{wrongCount}</span>
+                        <span>總計：{history.length}</span>
                     </div>
 
                     {isGeneratingSummary ? (
                         <div style={{ textAlign: 'center', padding: '2rem' }}>
                             <Loader2 className="spin" size={32} />
-                            <p>Analyzing your performance...</p>
+                            <p>分析您的表現中...</p>
                         </div>
                     ) : (
                         <div style={{ lineHeight: '1.6', fontSize: '0.95rem' }}>
-                            <ReactMarkdown>{summaryText}</ReactMarkdown>
+                            <ReactMarkdown>{summaryText || ''}</ReactMarkdown>
                         </div>
                     )}
                 </div>
@@ -434,14 +434,14 @@ export default function QuizMode({ cards: rawCards }) {
             <div className="quiz-container" style={{ maxWidth: '600px', margin: '0 auto' }}>
                 <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'left' }}>
                     <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 0 }}>
-                        <Sparkles color="var(--accent-primary)" /> Scenario Mode Settings
+                        <Sparkles color="var(--accent-primary)" /> 情境模式設定
                     </h2>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
-                        AI will generate real-world scenarios based on your deck.
+                        AI 將根據您的卡片組產生實際情境題目。
                     </p>
 
                     <div style={{ marginBottom: '1.5rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Difficulty: {difficulty === 1 ? "Easy" : difficulty === 2 ? "Medium" : "Hard"}</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>難度：{difficulty === 1 ? "簡單" : difficulty === 2 ? "中等" : "困難"}</label>
                         <input
                             type="range" min="1" max="3" step="1"
                             value={difficulty}
@@ -451,11 +451,11 @@ export default function QuizMode({ cards: rawCards }) {
                     </div>
 
                     <div style={{ marginBottom: '1.5rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Custom Context (Optional)</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>自訂情境（選填）</label>
                         <textarea
                             value={scenarioContext}
                             onChange={(e) => setScenarioContext(e.target.value)}
-                            placeholder="e.g. Focus on cloud security, or act like a hiring manager..."
+                            placeholder="例如：專注於雲端安全，或扮演面試官..."
                             style={{
                                 width: '100%', background: 'var(--bg-dark)', border: '1px solid var(--border)',
                                 borderRadius: '0.5rem', color: 'var(--text-primary)', padding: '0.75rem',
@@ -466,10 +466,10 @@ export default function QuizMode({ cards: rawCards }) {
 
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <button className="btn-primary" style={{ flex: 1 }} onClick={() => { setIsScenarioActive(true); generateQuestion(); }}>
-                            Start Scenarios
+                            開始情境測驗
                         </button>
                         <button className="btn-secondary" onClick={() => setQuizType('def-to-term')}>
-                            Cancel
+                            取消
                         </button>
                     </div>
                 </div>
@@ -484,23 +484,23 @@ export default function QuizMode({ cards: rawCards }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div className="quiz-score desktop-only">
                         <span className="score-item correct">
-                            <span className="score-label">Correct: </span>
+                            <span className="score-label">正確：</span>
                             <span className="score-value">{correctCount}</span>
                         </span>
                         <span className="score-separator"> / </span>
                         <span className="score-item wrong">
-                            <span className="score-label">Wrong: </span>
+                            <span className="score-label">錯誤：</span>
                             <span className="score-value">{wrongCount}</span>
                         </span>
                     </div>
 
                     <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto' }}>
                         <button className="btn-secondary" onClick={handleFinish} style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}>
-                            Finish & Summary
+                            結束並總結
                         </button>
-                        <button onClick={toggleQuizType} className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} title="Switch Quiz Direction">
+                        <button onClick={toggleQuizType} className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} title="切換測驗方向">
                             <ArrowLeftRight size={14} />
-                            {quizType === 'def-to-term' ? "Quiz Mode: Terms" : quizType === 'term-to-def' ? "Quiz Mode: Definitions" : "Quiz Mode: Scenarios"}
+                            {quizType === 'def-to-term' ? "測驗模式：詞彙" : quizType === 'term-to-def' ? "測驗模式：定義" : "測驗模式：情境"}
                         </button>
                     </div>
                 </div>
@@ -508,12 +508,12 @@ export default function QuizMode({ cards: rawCards }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                     <div className="quiz-score mobile-only">
                         <span className="score-item correct">
-                            <span className="score-label">Correct: </span>
+                            <span className="score-label">正確：</span>
                             <span className="score-value">{correctCount}</span>
                         </span>
                         <span className="score-separator"> / </span>
                         <span className="score-item wrong">
-                            <span className="score-label">Wrong: </span>
+                            <span className="score-label">錯誤：</span>
                             <span className="score-value">{wrongCount}</span>
                         </span>
                     </div>
@@ -522,13 +522,13 @@ export default function QuizMode({ cards: rawCards }) {
                         {quizType !== 'scenario' && (
                             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: useAI ? 'var(--accent-primary)' : 'var(--text-secondary)' }}>
                                 <input type="checkbox" checked={useAI} onChange={(e) => setUseAI(e.target.checked)} />
-                                <Sparkles size={14} /> AI Distractors
+                                <Sparkles size={14} /> AI 干擾選項
                             </label>
                         )}
 
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: autoNext ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                             <input type="checkbox" checked={autoNext} onChange={(e) => setAutoNext(e.target.checked)} />
-                            <FastForward size={14} /> Auto Next
+                            <FastForward size={14} /> 自動下一題
                         </label>
                     </div>
                 </div>
@@ -541,7 +541,7 @@ export default function QuizMode({ cards: rawCards }) {
                 paddingLeft: quizType === 'scenario' ? '0.625rem' : undefined,
                 paddingRight: quizType === 'scenario' ? '0.625rem' : undefined
             }}>
-                {currentCard ? headerText : "Loading..."}
+                {currentCard ? headerText : "載入中..."}
 
 
                 {countdown !== null && (
@@ -550,8 +550,8 @@ export default function QuizMode({ cards: rawCards }) {
                         display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 12
                     }}>
                         <div style={{ fontSize: '3rem', fontWeight: 'bold' }}>{countdown}</div>
-                        <div>Next question in...</div>
-                        <button onClick={handleManualNext} style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: 'white', color: 'black', borderRadius: '0.5rem' }}>Skip Wait</button>
+                        <div>下一題倒數...</div>
+                        <button onClick={handleManualNext} style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: 'white', color: 'black', borderRadius: '0.5rem' }}>跳過等待</button>
                     </div>
                 )}
             </div>
@@ -560,7 +560,7 @@ export default function QuizMode({ cards: rawCards }) {
                 {(isLoadingAI && (!currentCard || (quizType === 'scenario' && !scenarioData))) ? (
                     <div style={{ gridColumn: '1 / -1', padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
                         <Loader2 className="spin" style={{ animation: 'spin 1s linear infinite' }} />
-                        <p>Generating scenario...</p>
+                        <p>產生情境中...</p>
                     </div>
                 ) : (
                     options.map((option, index) => {
@@ -568,7 +568,7 @@ export default function QuizMode({ cards: rawCards }) {
                         const letter = String.fromCharCode(65 + index);
                         const isCorrect = quizType === 'scenario'
                             ? option.isCorrect
-                            : (option.id === currentCard.id && !option.isDistractor);
+                            : (option.id === currentCard?.id && !option.isDistractor);
 
                         if (view === 'feedback') {
                             if (isCorrect) className += ' correct';
@@ -593,11 +593,11 @@ export default function QuizMode({ cards: rawCards }) {
                     <button className="btn-primary" onClick={handleManualNext} disabled={isLoadingAI} style={{ minWidth: '180px' }}>
                         {isLoadingAI ? (
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                                <Loader2 className="spin" size={18} /> Generating...
+                                <Loader2 className="spin" size={18} /> 產生中...
                             </div>
                         ) : (
                             <>
-                                {autoNext ? "Next (Auto)" : "Next Question"} <ArrowRight size={18} style={{ marginLeft: '0.5rem', verticalAlign: 'middle' }} />
+                                {autoNext ? "下一題（自動）" : "下一題"} <ArrowRight size={18} style={{ marginLeft: '0.5rem', verticalAlign: 'middle' }} />
                             </>
                         )}
                     </button>

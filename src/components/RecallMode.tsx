@@ -1,26 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { Sparkles, Loader2, ArrowRight, Lightbulb, CheckCircle2, XCircle, ArrowLeftRight } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import { useState, useEffect } from 'react';
+import { Lightbulb, CheckCircle2, XCircle, ArrowLeftRight, Loader2, ArrowRight } from 'lucide-react';
+import type { RecallModeProps, RecallFeedback, Flashcard, RecallMode as RecallModeType, APIConfig, ChatCompletionResponse } from '../types';
 
-export default function RecallMode({ cards }) {
+export default function RecallMode({ cards }: RecallModeProps) {
     // State
-    const [currentCard, setCurrentCard] = useState(null);
+    const [currentCard, setCurrentCard] = useState<Flashcard | null>(null);
     const [userAnswer, setUserAnswer] = useState('');
-    const [isFlipped, setIsFlipped] = useState(false); // Flipped = Term is question, Def is answer (or vice versa)
-    const [mode, setMode] = useState('def-to-term'); // 'def-to-term' | 'term-to-def'
+    const [mode, setMode] = useState<RecallModeType>('def-to-term');
 
     // Grading State
     const [isGrading, setIsGrading] = useState(false);
-    const [feedback, setFeedback] = useState(null); // { score: number, message: string, correct: boolean }
+    const [feedback, setFeedback] = useState<RecallFeedback | null>(null);
     const [hintLevel, setHintLevel] = useState(0); // 0 = None, 1 = 3 Chars, 2 = 7 Chars, 3 = AI Hint
-    const [aiHint, setAiHint] = useState(null);
+    const [aiHint, setAiHint] = useState<string | null>(null);
     const [loadingHint, setLoadingHint] = useState(false);
 
     // Stats
-    const [scoreHistory, setScoreHistory] = useState([]); // Array of previous scores
+    const [scoreHistory, setScoreHistory] = useState<number[]>([]);
 
     // Queue State
-    const [queue, setQueue] = useState([]);
+    const [queue, setQueue] = useState<number[]>([]);
 
     const generateQuestion = () => {
         if (!cards || cards.length === 0) return;
@@ -36,7 +35,7 @@ export default function RecallMode({ cards }) {
             }
         }
 
-        const nextIndex = currentQueue.pop();
+        const nextIndex = currentQueue.pop()!;
         setQueue(currentQueue);
 
         const nextCard = cards[nextIndex];
@@ -50,13 +49,15 @@ export default function RecallMode({ cards }) {
 
     useEffect(() => {
         generateQuestion();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchAIHint = async () => {
+        if (!currentCard) return;
         setLoadingHint(true);
         try {
             const savedConfig = localStorage.getItem('flashcards_api_config');
-            const apiConfig = savedConfig ? JSON.parse(savedConfig) : {
+            const apiConfig: APIConfig = savedConfig ? JSON.parse(savedConfig) : {
                 provider: 'openrouter',
                 apiKey: '',
                 model: 'google/gemini-2.0-flash-exp:free'
@@ -70,7 +71,7 @@ export default function RecallMode({ cards }) {
 
             const prompt = `Give a cryptic, vague, but helpful hint for the answer: "${answer}". The question/context is: "${context}". Do NOT reveal the answer word itself. It should guide the user to the answer without giving it away directly. Max 15 words.`;
 
-            let url, headers, body;
+            let url: string, headers: HeadersInit, body: object;
             if (apiConfig.provider === 'openai') {
                 url = "https://api.openai.com/v1/chat/completions";
                 headers = { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" };
@@ -86,7 +87,7 @@ export default function RecallMode({ cards }) {
                 body = { model: apiConfig.model, messages: [{ role: "user", content: prompt }] };
             }
 
-            let response;
+            let response: Response | undefined;
             let attempts = 0;
             const maxAttempts = 3;
 
@@ -106,10 +107,10 @@ export default function RecallMode({ cards }) {
                 }
             }
 
-            const data = await response.json();
+            const data: ChatCompletionResponse = await response!.json();
             setAiHint(data.choices[0].message.content);
-        } catch (err) {
-            setAiHint("Could not generate hint.");
+        } catch {
+            setAiHint("無法產生提示。");
         } finally {
             setLoadingHint(false);
         }
@@ -127,9 +128,11 @@ export default function RecallMode({ cards }) {
     };
 
     const handleSubmit = async () => {
+        if (!currentCard) return;
+
         // Allow empty submission -> immediate fail
         if (!userAnswer.trim()) {
-            setFeedback({ score: 0, correct: false, message: "No answer provided." });
+            setFeedback({ score: 0, correct: false, message: "未提供答案。" });
             setScoreHistory(prev => [...prev, 0]);
             return;
         }
@@ -137,7 +140,7 @@ export default function RecallMode({ cards }) {
         setIsGrading(true);
         try {
             const savedConfig = localStorage.getItem('flashcards_api_config');
-            const apiConfig = savedConfig ? JSON.parse(savedConfig) : {
+            const apiConfig: APIConfig = savedConfig ? JSON.parse(savedConfig) : {
                 provider: 'openrouter',
                 apiKey: '',
                 model: 'google/gemini-2.0-flash-exp:free'
@@ -148,8 +151,7 @@ export default function RecallMode({ cards }) {
             const correctAnswer = mode === 'def-to-term' ? currentCard.term : currentCard.definition;
             const questionText = mode === 'def-to-term' ? currentCard.definition : currentCard.term;
 
-            let url, headers, body;
-            // ... (keep existing API logic)
+            let url: string, headers: HeadersInit, body: object;
             if (apiConfig.provider === 'openai') {
                 url = "https://api.openai.com/v1/chat/completions";
                 headers = {
@@ -192,7 +194,7 @@ export default function RecallMode({ cards }) {
                 };
             }
 
-            let result;
+            let result: RecallFeedback | undefined;
             let attempts = 0;
             const maxAttempts = 3;
 
@@ -208,7 +210,7 @@ export default function RecallMode({ cards }) {
                         throw new Error(`Server Error: ${response.status}`);
                     }
 
-                    const data = await response.json();
+                    const data: ChatCompletionResponse = await response.json();
 
                     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
                         throw new Error("Invalid AI Response Structure");
@@ -217,7 +219,7 @@ export default function RecallMode({ cards }) {
                     const content = data.choices[0].message.content;
                     const jsonStr = content.replace(/```json/g, '').replace(/```/g, '').trim();
 
-                    result = JSON.parse(jsonStr);
+                    result = JSON.parse(jsonStr) as RecallFeedback;
 
                     // Validate Result
                     if (typeof result.score !== 'number') throw new Error("Missing score in response");
@@ -226,33 +228,34 @@ export default function RecallMode({ cards }) {
 
                 } catch (e) {
                     attempts++;
-                    console.warn(`Grading attempt ${attempts} failed: ${e.message}`);
+                    console.warn(`Grading attempt ${attempts} failed: ${(e as Error).message}`);
                     if (attempts >= maxAttempts) throw e;
                     // Wait 1s before retry
                     await new Promise(r => setTimeout(r, 1000));
                 }
             }
 
-            setFeedback(result);
-            setScoreHistory(prev => [...prev, result.score]);
+            setFeedback(result!);
+            setScoreHistory(prev => [...prev, result!.score]);
 
         } catch (err) {
             console.error(err);
-            setFeedback({ score: 0, correct: false, message: "Error grading answer. Please try again." });
+            setFeedback({ score: 0, correct: false, message: "評分發生錯誤，請再試一次。" });
         } finally {
             setIsGrading(false);
         }
     };
 
-    const getHintText = () => {
+    const getHintText = (): string => {
+        if (!currentCard) return "";
         const answer = mode === 'def-to-term' ? currentCard.term : currentCard.definition;
         if (hintLevel === 1) return answer.substring(0, 3) + "...";
         if (hintLevel === 2) return answer.substring(0, 7) + "...";
-        if (hintLevel === 3) return loadingHint ? "Thinking..." : aiHint;
+        if (hintLevel === 3) return loadingHint ? "思考中..." : (aiHint || "");
         return "";
     };
 
-    if (!currentCard) return <div style={{ padding: '2rem' }}>Loading Deck...</div>;
+    if (!currentCard) return <div style={{ padding: '2rem' }}>載入中...</div>;
 
     const questionText = mode === 'def-to-term' ? currentCard.definition : currentCard.term;
     const avgScore = scoreHistory.length > 0 ? Math.round(scoreHistory.reduce((a, b) => a + b, 0) / scoreHistory.length) : 0;
@@ -262,23 +265,22 @@ export default function RecallMode({ cards }) {
 
             {/* Stats Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', padding: '0 1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                <div>Avg Match: <strong style={{ color: avgScore > 80 ? 'var(--success)' : 'var(--text-primary)' }}>{avgScore}%</strong></div>
+                <div>平均相符度：<strong style={{ color: avgScore > 80 ? 'var(--success)' : 'var(--text-primary)' }}>{avgScore}%</strong></div>
                 <button
                     className="btn-secondary"
                     onClick={() => setMode(m => m === 'def-to-term' ? 'term-to-def' : 'def-to-term')}
                     style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                    title="Switch Recall Direction"
+                    title="切換回想方向"
                 >
                     <ArrowLeftRight size={14} />
-                    {mode === 'def-to-term' ? "Recall: Terms" : "Recall: Definitions"}
+                    {mode === 'def-to-term' ? "回想：詞彙" : "回想：定義"}
                 </button>
             </div>
 
             {/* Question Card */}
-            {/* Question Card */}
             <div className="recall-card">
                 <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--accent-primary)', marginBottom: '1rem' }}>
-                    {mode === 'def-to-term' ? "Definition" : "Term"}
+                    {mode === 'def-to-term' ? "定義" : "詞彙"}
                 </span>
                 <div style={{ fontSize: '1.25rem', whiteSpace: 'pre-wrap' }}>
                     {questionText}
@@ -300,7 +302,7 @@ export default function RecallMode({ cards }) {
                         whiteSpace: 'pre-wrap',
                         boxSizing: 'border-box'
                     }}
-                    placeholder={mode === 'def-to-term' ? "Type the term..." : "Type the definition..."}
+                    placeholder={mode === 'def-to-term' ? "輸入詞彙..." : "輸入定義..."}
                     value={userAnswer}
                     onChange={(e) => setUserAnswer(e.target.value)}
                     disabled={!!feedback || isGrading}
@@ -322,7 +324,7 @@ export default function RecallMode({ cards }) {
                                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: hintLevel >= 3 ? 0.5 : 1 }}
                             >
                                 <Lightbulb size={16} />
-                                {hintLevel === 0 ? "Show Hint" : hintLevel === 1 ? "More Hint" : "Max Hint"}
+                                {hintLevel === 0 ? "顯示提示" : hintLevel === 1 ? "更多提示" : "最多提示"}
                             </button>
 
                             {hintLevel >= 1 && (
@@ -338,7 +340,7 @@ export default function RecallMode({ cards }) {
                             disabled={isGrading}
                             style={{ minWidth: '120px' }}
                         >
-                            {isGrading ? <Loader2 className="spin" size={20} /> : (userAnswer.trim() ? "Submit" : "I Don't Know")}
+                            {isGrading ? <Loader2 className="spin" size={20} /> : (userAnswer.trim() ? "送出" : "我不知道")}
                         </button>
                     </div>
                 )}
@@ -357,20 +359,20 @@ export default function RecallMode({ cards }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                         <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: feedback.correct ? 'var(--success)' : 'var(--error)' }}>
                             {feedback.correct ? <CheckCircle2 /> : <XCircle />}
-                            {feedback.correct ? "Correct!" : "Nice Try"}
+                            {feedback.correct ? "正確！" : "不錯的嘗試"}
                         </h3>
-                        <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{feedback.score}% Match</span>
+                        <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{feedback.score}% 相符</span>
                     </div>
 
                     <p style={{ marginBottom: '1rem' }}>{feedback.message}</p>
 
                     <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem' }}>
-                        <strong>Correct Answer:</strong> {mode === 'def-to-term' ? currentCard.term : currentCard.definition}
+                        <strong>正確答案：</strong> {mode === 'def-to-term' ? currentCard.term : currentCard.definition}
                     </div>
 
                     <div style={{ textAlign: 'right', marginTop: '1.5rem' }}>
                         <button className="btn-primary" onClick={generateQuestion}>
-                            Next Question <ArrowRight size={18} style={{ marginLeft: '0.5rem', verticalAlign: 'middle' }} />
+                            下一題 <ArrowRight size={18} style={{ marginLeft: '0.5rem', verticalAlign: 'middle' }} />
                         </button>
                     </div>
                 </div>

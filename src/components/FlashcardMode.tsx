@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ChevronLeft, ChevronRight, RotateCw, Shuffle } from 'lucide-react';
+import type { FlashcardModeProps, Flashcard } from '../types';
 
-export default function FlashcardMode({ cards: rawCards }) {
-    const clean = (s) => (s && typeof s === 'string') ? s.trim().replace(/^(['"])(.*)\1$/, '$2') : s;
-    const cards = rawCards ? rawCards.map(c => ({ ...c, term: clean(c.term), definition: clean(c.definition) })) : [];
+export default function FlashcardMode({ cards: rawCards }: FlashcardModeProps) {
+    const clean = (s: string | undefined): string => (s && typeof s === 'string') ? s.trim().replace(/^(['"])(.*)\1$/, '$2') : '';
+    const cards: Flashcard[] = rawCards ? rawCards.map(c => ({ ...c, term: clean(c.term), definition: clean(c.definition) })) : [];
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
-    const [deck, setDeck] = useState(cards);
+    const [deck, setDeck] = useState<Flashcard[]>(cards);
 
     const currentCard = deck[currentIndex];
 
-    const handleNext = (e) => {
+    const handleNext = (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsFlipped(false);
         setTimeout(() => {
@@ -18,7 +19,7 @@ export default function FlashcardMode({ cards: rawCards }) {
         }, 200);
     };
 
-    const handlePrev = (e) => {
+    const handlePrev = (e: React.MouseEvent) => {
         e.stopPropagation();
         setIsFlipped(false);
         setTimeout(() => {
@@ -36,11 +37,11 @@ export default function FlashcardMode({ cards: rawCards }) {
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>
-                    Card {currentIndex + 1} / {deck.length}
+                    第 {currentIndex + 1} 張 / 共 {deck.length} 張
                 </span>
                 <button className="btn-secondary" onClick={handleShuffle} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
                     <Shuffle size={14} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                    Shuffle
+                    洗牌
                 </button>
             </div>
 
@@ -58,7 +59,7 @@ export default function FlashcardMode({ cards: rawCards }) {
                             color: 'var(--text-secondary)',
                             opacity: 0.5
                         }}>
-                            Click to flip
+                            點擊翻轉
                         </span>
                     </div>
                     <div className="flashcard-back">

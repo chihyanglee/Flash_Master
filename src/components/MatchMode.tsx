@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Trophy, RefreshCw } from 'lucide-react';
+import type { MatchModeProps, MatchTile, Flashcard } from '../types';
 
-export default function MatchMode({ cards: rawCards }) {
-    const clean = (s) => (s && typeof s === 'string') ? s.trim().replace(/^(['"])(.*)\1$/, '$2') : s;
-    const cards = rawCards ? rawCards.map(c => ({ ...c, term: clean(c.term), definition: clean(c.definition) })) : [];
-    const [tiles, setTiles] = useState([]);
-    const [selectedTiles, setSelectedTiles] = useState([]);
-    const [matchedIds, setMatchedIds] = useState([]);
+export default function MatchMode({ cards: rawCards }: MatchModeProps) {
+    const clean = (s: string | undefined): string => (s && typeof s === 'string') ? s.trim().replace(/^(['"])(.*)\1$/, '$2') : '';
+    const cards: Flashcard[] = rawCards ? rawCards.map(c => ({ ...c, term: clean(c.term), definition: clean(c.definition) })) : [];
+    const [tiles, setTiles] = useState<MatchTile[]>([]);
+    const [selectedTiles, setSelectedTiles] = useState<MatchTile[]>([]);
+    const [matchedIds, setMatchedIds] = useState<string[]>([]);
     const [isWon, setIsWon] = useState(false);
 
     // Fisher-Yates Shuffle
-    const shuffle = (array) => {
+    const shuffle = <T,>(array: T[]): T[] => {
         const newArray = [...array];
         for (let i = newArray.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -25,9 +26,9 @@ export default function MatchMode({ cards: rawCards }) {
         const shuffledDeck = shuffle(cards);
         const gameCards = shuffledDeck.slice(0, 7);
 
-        const newTiles = gameCards.flatMap(card => [
-            { id: card.id + '-term', cardId: card.id, content: card.term, type: 'term' },
-            { id: card.id + '-def', cardId: card.id, content: card.definition, type: 'def' }
+        const newTiles: MatchTile[] = gameCards.flatMap(card => [
+            { id: card.id + '-term', cardId: card.id, content: card.term, type: 'term' as const },
+            { id: card.id + '-def', cardId: card.id, content: card.definition, type: 'def' as const }
         ]);
 
         // Shuffle the tiles again
@@ -41,9 +42,10 @@ export default function MatchMode({ cards: rawCards }) {
     // We trust that if rawCards changes, we re-init.
     useEffect(() => {
         initGame();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rawCards]);
 
-    const handleTileClick = (tile) => {
+    const handleTileClick = (tile: MatchTile) => {
         // Ignore if already matched or selected
         if (matchedIds.includes(tile.cardId) || selectedTiles.find(t => t.id === tile.id)) return;
 
@@ -73,21 +75,21 @@ export default function MatchMode({ cards: rawCards }) {
         }
     }, [matchedIds, tiles]);
 
-    if (!cards || cards.length < 2) return <div>Need at least 2 cards to match.</div>;
+    if (!cards || cards.length < 2) return <div>至少需要 2 張卡片才能配對。</div>;
 
     return (
         <div>
             <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
                 <button className="btn-secondary" onClick={initGame}>
-                    <RefreshCw size={16} /> Reset
+                    <RefreshCw size={16} /> 重設
                 </button>
             </div>
 
             {isWon ? (
                 <div style={{ textAlign: 'center', padding: '3rem' }}>
                     <Trophy size={64} color="var(--accent-primary)" style={{ marginBottom: '1rem' }} />
-                    <h2>All Cleared!</h2>
-                    <button className="btn-primary" onClick={initGame}>Play Again</button>
+                    <h2>全部完成！</h2>
+                    <button className="btn-primary" onClick={initGame}>再玩一次</button>
                 </div>
             ) : (
                 <div className="match-grid">

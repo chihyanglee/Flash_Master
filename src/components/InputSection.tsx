@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Save, AlertCircle, Sparkles, Loader2, Settings, HelpCircle, Trash2 } from 'lucide-react';
+import type { InputSectionProps, Flashcard, APIConfig, ChatCompletionResponse } from '../types';
 
-export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabled }) {
+export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabled }: InputSectionProps) {
     // Load from local storage or default to empty
     const [text, setText] = useState(() => localStorage.getItem('flashcards_input_text') || '');
     const [context, setContext] = useState(() => localStorage.getItem('flashcards_input_context') || '');
 
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
     const [useAI, setUseAI] = useState(initialAiEnabled || false);
     const [isLoading, setIsLoading] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
@@ -22,23 +23,23 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
 
     // API Config State
     const [showSettings, setShowSettings] = useState(false);
-    const [apiConfig, setApiConfig] = useState(() => {
+    const [apiConfig, setApiConfig] = useState<APIConfig>(() => {
         const saved = localStorage.getItem('flashcards_api_config');
         return saved ? JSON.parse(saved) : {
-            provider: 'openrouter', // 'openrouter' | 'openai'
+            provider: 'openrouter',
             apiKey: '',
             model: 'google/gemini-2.0-flash-exp:free'
         };
     });
 
-    const updateApiConfig = (newConfig) => {
+    const updateApiConfig = (newConfig: Partial<APIConfig>) => {
         const updated = { ...apiConfig, ...newConfig };
         setApiConfig(updated);
         localStorage.setItem('flashcards_api_config', JSON.stringify(updated));
     };
 
     const handleClear = () => {
-        if (window.confirm("Are you sure you want to clear the terms box?")) {
+        if (window.confirm("確定要清除詞彙框嗎？")) {
             setText('');
             localStorage.removeItem('flashcards_input_text');
         }
@@ -55,7 +56,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
             "google/gemini-3-flash-preview"
         ];
 
-        let updates = {};
+        const updates: Partial<APIConfig> = {};
         if (apiConfig.provider !== 'openrouter') {
             updates.provider = 'openrouter';
         }
@@ -66,10 +67,11 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
         if (Object.keys(updates).length > 0) {
             updateApiConfig(updates);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const textareaRef = useRef(null);
-    const lineNumbersRef = useRef(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const lineNumbersRef = useRef<HTMLDivElement>(null);
 
     const handleScroll = () => {
         if (textareaRef.current && lineNumbersRef.current) {
@@ -85,14 +87,14 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
             }
             parseAndSave(text);
         } catch (err) {
-            setError(err.message);
+            setError((err as Error).message);
         }
     };
 
-    const parseAndSave = (inputText) => {
+    const parseAndSave = (inputText: string) => {
         try {
             const lines = inputText.trim().split('\n');
-            const cards = [];
+            const cards: Flashcard[] = [];
             lines.forEach((line, index) => {
                 if (!line.trim()) return;
                 // Robust Parse: Try Pipe first, then Comma
@@ -105,46 +107,46 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
                 }
 
                 if (splitIndex === -1) {
-                    throw new Error(`Line ${index + 1} is missing a separator (| or ,): "${line}"`);
+                    throw new Error(`第 ${index + 1} 行缺少分隔符號（| 或 ,）：「${line}」`);
                 }
 
-                const clean = (s) => s.trim().replace(/^(['"])(.*)\1$/, '$2');
+                const clean = (s: string) => s.trim().replace(/^(['"])(.*)\1$/, '$2');
                 const term = clean(line.substring(0, splitIndex));
                 const definition = clean(line.substring(splitIndex + 1));
 
                 if (!term || !definition) {
-                    throw new Error(`Line ${index + 1} has empty term or definition.`);
+                    throw new Error(`第 ${index + 1} 行的詞彙或定義為空。`);
                 }
                 cards.push({ id: Math.random().toString(36).substr(2, 9), term, definition });
             });
 
             if (cards.length === 0) {
-                throw new Error("No valid cards found.");
+                throw new Error("找不到有效的卡片。");
             }
 
             onSave(cards);
             setError(null);
         } catch (err) {
-            setError(err.message);
+            setError((err as Error).message);
         }
     };
 
     const generateFlashcards = async () => {
         if (!text.trim()) {
-            setError("Please enter some text to generate cards from.");
+            setError("請輸入要產生卡片的文字。");
             return;
         }
 
         const apiKey = apiConfig.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY;
         // If still no key and using OpenAI, error. OpenRouter might use free env key.
         if (!apiKey && apiConfig.provider === 'openai') {
-            setError("Please enter your OpenAI API Key in settings.");
+            setError("請在設定中輸入您的 OpenAI API 金鑰。");
             setShowSettings(true);
             return;
         }
 
         // Determine URL and Headers based on provider
-        let url, headers, body;
+        let url: string, headers: HeadersInit, body: object;
 
         if (apiConfig.provider === 'openai') {
             url = "https://api.openai.com/v1/chat/completions";
@@ -157,7 +159,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
                 messages: [
                     {
                         role: "system",
-                        content: `You are a helpful flashcard generator. extracting key terms and definitions from the user's text. 
+                        content: `You are a helpful flashcard generator. extracting key terms and definitions from the user's text.
                         ${context ? `CONTEXT: The user is studying "${context}". Use this to ensure definitions are relevant to this topic.` : ''}
                         Your output must be strictly in CSV format: TERM,DEFINITION. One per line. Do not include markdown code blocks, headers, or any other conversation. Do not number the lines. Example:
                         Apple,A red fruit
@@ -180,7 +182,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
                 messages: [
                     {
                         role: "system",
-                        content: `You are a helpful flashcard generator. extracting key terms and definitions from the user's text. 
+                        content: `You are a helpful flashcard generator. extracting key terms and definitions from the user's text.
                         ${context ? `CONTEXT: The user is studying "${context}". Use this to ensure definitions are relevant to this topic.` : ''}
                         Your output must be strictly in CSV format: TERM,DEFINITION. One per line. Do not include markdown code blocks, headers, or any other conversation. Do not number the lines. Example:
                         Apple,A red fruit
@@ -211,19 +213,21 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
 
             if (!response.ok) {
                 const errorText = await response.text();
-                let message = "Failed to fetch";
+                let message = "擷取失敗";
                 try {
                     const errData = JSON.parse(errorText);
                     message = errData.error?.message || message;
-                } catch (e) { /* ignore */ }
+                } catch {
+                    /* ignore */
+                }
 
                 if (response.status === 401) {
-                    throw new Error("Invalid API Key. Please check your key in Settings.");
+                    throw new Error("API 金鑰無效，請在設定中檢查您的金鑰。");
                 }
-                throw new Error(`${message} (Status: ${response.status})`);
+                throw new Error(`${message}（狀態：${response.status}）`);
             }
 
-            const data = await response.json();
+            const data: ChatCompletionResponse = await response.json();
             const content = data.choices[0].message.content;
 
             // Clean up potential markdown code blocks if the AI disobeyed
@@ -232,10 +236,10 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
             parseAndSave(cleanContent);
 
         } catch (err) {
-            if (err.message.includes("Failed to fetch")) {
-                setError("Connection Failed. Do you have a valid API Key in Settings?");
+            if ((err as Error).message.includes("Failed to fetch")) {
+                setError("連線失敗。您在設定中有有效的 API 金鑰嗎？");
             } else {
-                setError("AI Generation Failed: " + err.message);
+                setError("AI 產生失敗：" + (err as Error).message);
             }
         } finally {
             setIsLoading(false);
@@ -244,13 +248,13 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
 
     const generateTermsOnly = async () => {
         if (!context.trim()) {
-            setError("Please enter a topic in the Optional Context box to generate terms (e.g. 'CISSP Domain 1').");
+            setError("請在選填情境欄位中輸入主題以產生詞彙（例如「CISSP 領域 1」）。");
             return;
         }
 
         const apiKey = apiConfig.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY;
         if (!apiKey && apiConfig.provider === 'openai') {
-            setError("Please enter your OpenAI API Key in settings.");
+            setError("請在設定中輸入您的 OpenAI API 金鑰。");
             setShowSettings(true);
             return;
         }
@@ -258,7 +262,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
         setIsLoading(true);
         setError(null);
 
-        let url, headers, body;
+        let url: string, headers: HeadersInit, body: object;
         const prompt = `Generate 30 high-quality flashcards for the topic: "${context}". Output strictly in CSV format: TERM,DEFINITION. One per line. Do not number lines. No intro/outro text. Example:
         Apple,A red fruit
         Banana,A yellow fruit`;
@@ -295,48 +299,35 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
             if (!response.ok) {
                 const errorText = await response.text();
                 if (response.status === 401) {
-                    throw new Error("Invalid API Key. Please check your key in Settings.");
+                    throw new Error("API 金鑰無效，請在設定中檢查您的金鑰。");
                 }
-                throw new Error(`Generation failed (Status: ${response.status}). ${errorText.substring(0, 100)}`);
+                throw new Error(`產生失敗（狀態：${response.status}）。${errorText.substring(0, 100)}`);
             }
 
-            const data = await response.json();
+            const data: ChatCompletionResponse = await response.json();
             const content = data.choices[0].message.content;
             const cleanContent = content.replace(/```csv/g, '').replace(/```/g, '').trim();
 
             setText(prev => prev ? prev + '\n' + cleanContent : cleanContent);
 
         } catch (err) {
-            if (err.message.includes("Failed to fetch")) {
-                setError("Connection Failed. Do you have a valid API Key in Settings?");
+            if ((err as Error).message.includes("Failed to fetch")) {
+                setError("連線失敗。您在設定中有有效的 API 金鑰嗎？");
             } else {
-                setError(err.message);
+                setError((err as Error).message);
             }
         } finally {
             setIsLoading(false);
         }
     };
 
-    const placeholderCSV = `CIA Triad,Confidentiality Integrity Availability
-AES,Advanced Encryption Standard
-Two-Factor,Something you know plus something you have`;
+    const placeholderCSV = `CIA 三元組,機密性、完整性、可用性
+AES,進階加密標準
+雙因素驗證,您知道的東西加上您擁有的東西`;
 
-    const placeholderAI = `Paste your study notes here! For example:
+    const placeholderAI = `在這裡貼上您的學習筆記！例如：
 
-Security models are critical for CISSP. The Bell-LaPadula model focuses on confidentiality and has the 'No Read Up, No Write Down' rule. Biba, on the other hand, focuses on integrity.`;
-
-    const guideText = `Welcome to FlashMaster! ⚡
-
-1. Manual Mode:
-   - Simply enter your terms and definitions in the box, comma separated.
-   - Example: Term,Definition
-   - Hit "Create Flashcards" to play without AI.
-
-2. AI Power Mode 🤖:
-   - Toggle "Use AI Generation".
-   - Fill in the "Optional Context" (e.g., "Biology Ch 1").
-   - Paste raw notes or click "Generate Terms" to get ~50-100 cards instantly.
-   - Enabling AI also unlocks RECALL MODE - the ultimate memory test!`;
+安全模型對於 CISSP 非常重要。Bell-LaPadula 模型專注於機密性，具有「不可向上讀取、不可向下寫入」的規則。而 Biba 則專注於完整性。`;
 
     return (
         <div className="input-container">
@@ -345,18 +336,18 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                     <button
                         onClick={() => setShowHelp(true)}
                         className="btn-secondary action-btn help-btn"
-                        title="How to use"
+                        title="使用說明"
                     >
                         <HelpCircle size={14} />
-                        <span className="btn-text">Help</span>
+                        <span className="btn-text">說明</span>
                     </button>
                     <button
                         onClick={() => setShowSettings(!showSettings)}
                         className="btn-secondary action-btn"
-                        title="AI Settings"
+                        title="AI 設定"
                     >
                         <Settings size={14} />
-                        <span className="btn-text">Settings</span>
+                        <span className="btn-text">設定</span>
                     </button>
                     <label className={`ai-toggle ${useAI ? 'active' : ''}`}>
                         <input
@@ -370,14 +361,14 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                         />
                         <Sparkles size={12} className="ai-icon" />
                         <span className="ai-label">
-                            Use AI Generation
+                            使用 AI 產生
                         </span>
                     </label>
                 </div>
                 {!useAI && (
                     <div style={{ fontSize: '0.7rem', color: 'orange', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.5rem' }}>
                         <AlertCircle size={12} />
-                        Note: Disabling AI will disable Recall Mode and distractor generation.
+                        注意：關閉 AI 將停用回想模式和干擾選項產生功能。
                     </div>
                 )}
             </div>
@@ -394,29 +385,29 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                         maxWidth: '500px', width: '100%', border: '1px solid var(--border)',
                         position: 'relative', maxHeight: '90vh', overflowY: 'auto'
                     }}>
-                        <h3 style={{ marginTop: 0 }}>How to Use FlashMaster</h3>
+                        <h3 style={{ marginTop: 0 }}>如何使用閃卡大師</h3>
                         <div style={{ lineHeight: 1.6, color: 'var(--text-secondary)', textAlign: 'left' }}>
                             <p style={{ marginBottom: '1.5rem' }}>
-                                FlashMaster is designed to help you study efficiently using custom flashcards, quizzes, and matching games.
+                                閃卡大師旨在幫助您使用自訂閃卡、測驗和配對遊戲有效率地學習。
                             </p>
 
-                            <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1rem' }}>1. Manual Mode</h4>
+                            <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1rem' }}>1. 手動模式</h4>
                             <ul style={{ paddingLeft: '1.5rem', marginBottom: '1.5rem', marginTop: 0 }}>
-                                <li><strong>Input Format:</strong> Enter one term and definition per line, separated by a comma (or pipe `|`).</li>
-                                <li><strong>Example:</strong> <code>Term, Definition</code></li>
-                                <li><strong>Start:</strong> Click "Create Flashcards" to begin studying immediately.</li>
+                                <li><strong>輸入格式：</strong>每行輸入一個詞彙和定義，以逗號（或管道符號 `|`）分隔。</li>
+                                <li><strong>範例：</strong> <code>詞彙, 定義</code></li>
+                                <li><strong>開始：</strong>點擊「建立閃卡」立即開始學習。</li>
                             </ul>
 
-                            <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1rem' }}>2. AI Generation Mode</h4>
+                            <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1rem' }}>2. AI 產生模式</h4>
                             <p style={{ marginBottom: '0.5rem' }}>
-                                Leverage AI to automatically generate study materials from raw text.
+                                利用 AI 從原始文字自動產生學習材料。
                             </p>
                             <ul style={{ paddingLeft: '1.5rem', marginBottom: '0', marginTop: 0 }}>
-                                <li><strong>Enable:</strong> Toggle the "Use AI Generation" switch at the top.</li>
-                                <li><strong>Context:</strong> Optionally add a subject (e.g., "CISSP Domain 1") to guide the generation.</li>
-                                <li><strong>Input:</strong> Paste your notes, identifiers, or summary text into the main text area.</li>
-                                <li><strong>Generate:</strong> Click "Generate Terms" to populate the list for review, or "Generate & Play" to start immediately.</li>
-                                <li><strong>Recall Mode:</strong> Enabling AI unlocks Recall Mode, a more advanced testing method.</li>
+                                <li><strong>啟用：</strong>切換頂部的「使用 AI 產生」開關。</li>
+                                <li><strong>情境：</strong>可選擇添加主題（例如「CISSP 領域 1」）來引導產生。</li>
+                                <li><strong>輸入：</strong>將您的筆記、識別碼或摘要文字貼到主要文字區。</li>
+                                <li><strong>產生：</strong>點擊「產生詞彙」以填充清單供審閱，或點擊「產生並開始」立即開始。</li>
+                                <li><strong>回想模式：</strong>啟用 AI 可解鎖回想模式，這是一種更進階的測試方法。</li>
                             </ul>
                         </div>
                         <button
@@ -424,7 +415,7 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                             style={{ marginTop: '2rem', width: '100%' }}
                             onClick={() => setShowHelp(false)}
                         >
-                            Got it!
+                            了解！
                         </button>
                     </div>
                 </div>
@@ -439,10 +430,10 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                     marginBottom: '1rem',
                     textAlign: 'left'
                 }}>
-                    <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1rem' }}>AI Configuration</h3>
+                    <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1rem' }}>AI 設定</h3>
 
                     <div style={{ marginBottom: '1rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>API Key (Stored in Browser)</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>API 金鑰（儲存於瀏覽器）</label>
                         <input
                             type="password"
                             value={apiConfig.apiKey}
@@ -451,12 +442,12 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                             style={{ width: '100%', padding: '0.5rem', borderRadius: '0.25rem', background: '#0f172a', color: 'white', border: '1px solid var(--border)' }}
                         />
                         <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                            Your key is stored locally in your browser and sent directly to the OpenRouter API.
+                            您的金鑰儲存在瀏覽器中，並直接傳送至 OpenRouter API。
                         </p>
                     </div>
 
                     <div style={{ marginBottom: '0.5rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Model</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>模型</label>
                         <select
                             value={apiConfig.model}
                             onChange={(e) => updateApiConfig({ model: e.target.value })}
@@ -477,7 +468,7 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                 <div style={{ marginBottom: '1rem' }}>
                     <input
                         type="text"
-                        placeholder="Optional Context (e.g. 'CISSP Domain 1', 'Biology 101')"
+                        placeholder="選填情境（例如「CISSP 領域 1」、「生物學 101」）"
                         maxLength={100}
                         value={context}
                         onChange={(e) => setContext(e.target.value)}
@@ -497,14 +488,14 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                         {context.length}/100
                     </div>
                     <p style={{ color: 'var(--text-secondary)', marginTop: '1rem', marginBottom: '0' }}>
-                        Paste your raw notes, article, or summary below. AI will extract the terms for you.
+                        在下方貼上您的筆記、文章或摘要，AI 將為您擷取詞彙。
                     </p>
                 </div>
             )}
 
             <div style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
                 <p style={{ marginBottom: '0.5rem' }}>
-                    <span>Paste your terms below one per line with comma separation: <code>TERM,DEFINITION</code></span>
+                    <span>在下方貼上您的詞彙，每行一個，以逗號分隔：<code>詞彙,定義</code></span>
                 </p>
             </div>
 
@@ -573,10 +564,10 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                     className="btn-secondary"
                     onClick={handleClear}
                     style={{ color: '#ef4444', borderColor: '#ef4444', padding: '0.5rem 1rem' }}
-                    title="Clear all text"
+                    title="清除所有文字"
                 >
                     <Trash2 size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                    Clear
+                    清除
                 </button>
 
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'flex-end', flex: 1 }}>
@@ -586,19 +577,19 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
                             onClick={generateTermsOnly}
                             disabled={isLoading}
                         >
-                            Generate Terms
+                            產生詞彙
                         </button>
                     )}
                     <button className="btn-primary" onClick={handleSave} disabled={isLoading}>
                         {isLoading ? (
                             <>
                                 <Loader2 size={18} className="spin" style={{ marginRight: '0.5rem', verticalAlign: 'middle', animation: 'spin 1s linear infinite' }} />
-                                Generating...
+                                產生中...
                             </>
                         ) : (
                             <>
                                 {useAI ? <Sparkles size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} /> : <Save size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />}
-                                {useAI ? "Generate & Play" : "Create Flashcards"}
+                                {useAI ? "產生並開始" : "建立閃卡"}
                             </>
                         )}
                     </button>
@@ -607,7 +598,7 @@ Security models are critical for CISSP. The Bell-LaPadula model focuses on confi
 
             {isLoading && useAI && (
                 <div style={{ marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem', fontStyle: 'italic' }}>
-                    Should take less than 30 seconds to generate all flashcards, depending on how many were added...
+                    產生閃卡應該不會超過 30 秒，視新增數量而定...
                 </div>
             )}
 

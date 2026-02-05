@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { BookOpen, HelpCircle, Grid, Brain, ArrowLeft } from 'lucide-react';
 import FlashcardMode from './FlashcardMode';
 import QuizMode from './QuizMode';
 import MatchMode from './MatchMode';
 import RecallMode from './RecallMode';
+import type { StudyDashboardProps } from '../types';
 
-export default function StudyDashboard({ cards, onBack, aiEnabled }) {
-    const [activeTab, setActiveTab] = useState('study');
+type TabType = 'study' | 'quiz' | 'match' | 'recall';
+
+export default function StudyDashboard({ cards, onBack, aiEnabled }: StudyDashboardProps) {
+    const [activeTab, setActiveTab] = useState<TabType>('study');
 
     return (
         <div>
@@ -18,38 +21,38 @@ export default function StudyDashboard({ cards, onBack, aiEnabled }) {
                     onClick={onBack}
                 >
                     <ArrowLeft size={18} />
-                    <span>Terms</span>
+                    <span>詞彙</span>
                 </button>
                 <button
                     className={`tab ${activeTab === 'study' ? 'active' : ''}`}
                     onClick={() => setActiveTab('study')}
                 >
                     <BookOpen size={18} />
-                    <span>Flashcards</span>
+                    <span>閃卡</span>
                 </button>
                 <button
                     className={`tab ${activeTab === 'quiz' ? 'active' : ''}`}
                     onClick={() => setActiveTab('quiz')}
                 >
                     <HelpCircle size={18} />
-                    <span>Quiz</span>
+                    <span>測驗</span>
                 </button>
                 <button
                     className={`tab ${activeTab === 'match' ? 'active' : ''}`}
                     onClick={() => setActiveTab('match')}
                 >
                     <Grid size={18} />
-                    <span>Match</span>
+                    <span>配對</span>
                 </button>
                 <button
                     className={`tab ${activeTab === 'recall' ? 'active' : ''}`}
                     onClick={() => aiEnabled && setActiveTab('recall')}
                     disabled={!aiEnabled}
-                    title={!aiEnabled ? "Enable AI in Input to use Recall Mode" : "Recall Mode"}
+                    title={!aiEnabled ? "在輸入區啟用 AI 以使用回想模式" : "回想模式"}
                     style={{ opacity: !aiEnabled ? 0.5 : 1, cursor: !aiEnabled ? 'not-allowed' : 'pointer' }}
                 >
                     <Brain size={18} />
-                    <span>Recall</span>
+                    <span>回想</span>
                 </button>
             </div>
 
