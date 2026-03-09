@@ -1,14 +1,13 @@
 import { useState } from 'react';
-import { BookOpen, HelpCircle, Grid, Brain, ArrowLeft } from 'lucide-react';
+import { BookOpen, HelpCircle, Brain } from 'lucide-react';
 import FlashcardMode from './FlashcardMode';
 import QuizMode from './QuizMode';
-import MatchMode from './MatchMode';
 import RecallMode from './RecallMode';
 import type { StudyDashboardProps } from '../types';
 
-type TabType = 'study' | 'quiz' | 'match' | 'recall';
+type TabType = 'study' | 'quiz' | 'recall';
 
-export default function StudyDashboard({ cards, onBack, aiEnabled }: StudyDashboardProps) {
+export default function StudyDashboard({ cards, aiEnabled }: StudyDashboardProps) {
     const [activeTab, setActiveTab] = useState<TabType>('study');
 
     return (
@@ -16,13 +15,6 @@ export default function StudyDashboard({ cards, onBack, aiEnabled }: StudyDashbo
 
 
             <div className="tabs">
-                <button
-                    className="tab mobile-only-tab"
-                    onClick={onBack}
-                >
-                    <ArrowLeft size={18} />
-                    <span>詞彙</span>
-                </button>
                 <button
                     className={`tab ${activeTab === 'study' ? 'active' : ''}`}
                     onClick={() => setActiveTab('study')}
@@ -38,13 +30,6 @@ export default function StudyDashboard({ cards, onBack, aiEnabled }: StudyDashbo
                     <span>測驗</span>
                 </button>
                 <button
-                    className={`tab ${activeTab === 'match' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('match')}
-                >
-                    <Grid size={18} />
-                    <span>配對</span>
-                </button>
-                <button
                     className={`tab ${activeTab === 'recall' ? 'active' : ''}`}
                     onClick={() => aiEnabled && setActiveTab('recall')}
                     disabled={!aiEnabled}
@@ -58,7 +43,6 @@ export default function StudyDashboard({ cards, onBack, aiEnabled }: StudyDashbo
 
             {activeTab === 'study' && <FlashcardMode cards={cards} />}
             {activeTab === 'quiz' && <QuizMode cards={cards} />}
-            {activeTab === 'match' && <MatchMode cards={cards} />}
             {activeTab === 'recall' && <RecallMode cards={cards} />}
         </div >
     );
