@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import InputSection from './components/InputSection';
 import StudyDashboard from './components/StudyDashboard';
-import { Zap, Github, ArrowLeft } from 'lucide-react';
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import type { Flashcard } from './types';
@@ -24,61 +23,61 @@ function App() {
     setMode('study');
   };
 
-  const handleBack = () => {
-    setMode('input');
-  };
-
   return (
     <div className="app-main">
-      <header className="app-header">
-        {mode === 'study' && (
-          <button
-            onClick={handleBack}
-            className="btn-secondary header-back"
-          >
-            <ArrowLeft size={14} />
-            <span className="back-text">詞彙</span>
-          </button>
-        )}
-        <div>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: '800', background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0, display: 'inline-block' }}>
-            <Zap size={32} style={{ color: '#a855f7', stroke: '#a855f7', verticalAlign: 'middle', marginRight: '0.5rem' }} />
-            閃卡大師
+      <header style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '1rem 0',
+        borderBottom: '1px solid var(--border)',
+        marginBottom: '2rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+            FlashMaster
           </h1>
-          <p className="header-tagline" style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-            使用閃卡、測驗、配對和回想模式測試您的記憶力
-          </p>
+          {cards.length > 0 && (
+            <nav style={{ display: 'flex', gap: '1rem' }}>
+              <button
+                onClick={() => setMode('input')}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: mode === 'input' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  fontSize: '0.9rem', fontWeight: mode === 'input' ? '600' : '400',
+                  borderBottom: mode === 'input' ? '2px solid var(--accent)' : '2px solid transparent',
+                  padding: '0.25rem 0', fontFamily: 'inherit'
+                }}
+              >
+                建立
+              </button>
+              <button
+                onClick={() => setMode('study')}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: mode === 'study' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  fontSize: '0.9rem', fontWeight: mode === 'study' ? '600' : '400',
+                  borderBottom: mode === 'study' ? '2px solid var(--accent)' : '2px solid transparent',
+                  padding: '0.25rem 0', fontFamily: 'inherit'
+                }}
+              >
+                學習
+              </button>
+            </nav>
+          )}
         </div>
-        <a
-          href="https://github.com/JJsilvera1/CISSP-Quiz"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-secondary header-github"
-        >
-          <Github size={14} />
-          <span>GitHub</span>
-        </a>
       </header>
 
       <main>
         {mode === 'input' ? (
           <InputSection onSave={handleSaveCards} onAiEnabledChange={setAiEnabled} initialAiEnabled={aiEnabled} />
         ) : (
-          <StudyDashboard cards={cards} onBack={handleBack} aiEnabled={aiEnabled} />
+          <StudyDashboard cards={cards} aiEnabled={aiEnabled} />
         )}
       </main>
 
       <footer className="footer">
-        <p>&copy; 2025 閃卡大師。為輕鬆學習而打造。作者：Jordan S.</p>
-        <a
-          href="https://github.com/JJsilvera1/CISSP-Quiz"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-secondary footer-github"
-        >
-          <Github size={14} />
-          <span>GitHub</span>
-        </a>
+        <p>&copy; 2025 FlashMaster</p>
       </footer>
       <Analytics />
       <SpeedInsights />
