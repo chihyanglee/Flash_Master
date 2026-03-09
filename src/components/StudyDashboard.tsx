@@ -20,24 +20,24 @@ export default function StudyDashboard({ cards, aiEnabled }: StudyDashboardProps
                     onClick={() => setActiveTab('study')}
                 >
                     <BookOpen size={18} />
-                    <span>閃卡</span>
+                    <span>Cards</span>
                 </button>
                 <button
                     className={`tab ${activeTab === 'quiz' ? 'active' : ''}`}
                     onClick={() => setActiveTab('quiz')}
                 >
                     <HelpCircle size={18} />
-                    <span>測驗</span>
+                    <span>Quiz</span>
                 </button>
                 <button
                     className={`tab ${activeTab === 'recall' ? 'active' : ''}`}
                     onClick={() => aiEnabled && setActiveTab('recall')}
                     disabled={!aiEnabled}
-                    title={!aiEnabled ? "在輸入區啟用 AI 以使用回想模式" : "回想模式"}
+                    title={!aiEnabled ? "Enable AI in the input section to use Recall mode" : "Recall mode"}
                     style={{ opacity: !aiEnabled ? 0.5 : 1, cursor: !aiEnabled ? 'not-allowed' : 'pointer' }}
                 >
                     <Brain size={18} />
-                    <span>回想</span>
+                    <span>Recall</span>
                 </button>
             </div>
 

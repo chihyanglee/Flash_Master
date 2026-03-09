@@ -177,7 +177,7 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
 
             } catch (err) {
                 console.error(err);
-                setAiError("AI 失敗，改用卡片組。");
+                setAiError("AI failed, using card deck instead.");
                 generateStandardOptions(randomCard);
             } finally {
                 setIsLoadingAI(false);
@@ -258,7 +258,7 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
             setView('question');
 
         } catch {
-            setAiError("情境產生失敗，請檢查 API 金鑰。");
+            setAiError("Scenario generation failed. Please check your API key.");
             setIsScenarioActive(false);
         } finally {
             setIsLoadingAI(false);
@@ -268,7 +268,7 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
     const handleFinish = async () => {
         setShowSummary(true);
         if (history.length === 0) {
-            setSummaryText("尚未回答任何問題！");
+            setSummaryText("No questions answered yet!");
             return;
         }
 
@@ -304,7 +304,7 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
             setSummaryText(data.choices[0].message.content);
 
         } catch {
-            setSummaryText("無法產生 AI 總結，請確認已設定 API 金鑰。");
+            setSummaryText("Could not generate AI summary. Please check your API key.");
         } finally {
             setIsGeneratingSummary(false);
         }
@@ -379,7 +379,7 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
     };
 
     if (!cards || (!useAI && cards.length < 4)) {
-        return <div style={{ padding: '2rem' }}>卡片數量不足。</div>;
+        return <div style={{ padding: '2rem' }}>Not enough cards.</div>;
     }
 
     const headerText = quizType === 'scenario'
@@ -390,7 +390,7 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
                     display: 'block', marginBottom: '0.75rem', fontSize: '1.1rem',
                     textTransform: 'uppercase', letterSpacing: '0.1em'
                 }}>
-                    {selectedOption?.isCorrect ? '正確' : '錯誤'}
+                    {selectedOption?.isCorrect ? 'CORRECT' : 'WRONG'}
                 </strong>
                 <span style={{ display: 'block', fontSize: '1.1rem', lineHeight: '1.6' }}>{scenarioData.rationale}</span>
             </div>
@@ -403,22 +403,22 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
         return (
             <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
                 <button className="btn-secondary" onClick={() => setShowSummary(false)} style={{ marginBottom: '1rem' }}>
-                    &larr; 返回測驗
+                    &larr; Back to Quiz
                 </button>
                 <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
                     <h2 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Sparkles color="var(--accent)" /> AI 學習總結
+                        <Sparkles color="var(--accent)" /> AI Study Summary
                     </h2>
                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', padding: '1rem', background: 'var(--bg-primary)', borderRadius: '0.5rem' }}>
-                        <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>正確：{correctCount}</span>
-                        <span style={{ color: 'var(--error)', fontWeight: 'bold' }}>錯誤：{wrongCount}</span>
-                        <span>總計：{history.length}</span>
+                        <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>Correct: {correctCount}</span>
+                        <span style={{ color: 'var(--error)', fontWeight: 'bold' }}>Wrong: {wrongCount}</span>
+                        <span>Total: {history.length}</span>
                     </div>
 
                     {isGeneratingSummary ? (
                         <div style={{ textAlign: 'center', padding: '2rem' }}>
                             <Loader2 className="spin" size={32} />
-                            <p>分析您的表現中...</p>
+                            <p>Analyzing your performance...</p>
                         </div>
                     ) : (
                         <div style={{ lineHeight: '1.6', fontSize: '0.95rem' }}>
@@ -434,14 +434,14 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
             <div className="quiz-container" style={{ maxWidth: '600px', margin: '0 auto' }}>
                 <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'left' }}>
                     <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 0 }}>
-                        <Sparkles color="var(--accent)" /> 情境模式設定
+                        <Sparkles color="var(--accent)" /> Scenario Settings
                     </h2>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
-                        AI 將根據您的卡片組產生實際情境題目。
+                        AI will generate real-world scenario questions based on your card deck.
                     </p>
 
                     <div style={{ marginBottom: '1.5rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>難度：{difficulty === 1 ? "簡單" : difficulty === 2 ? "中等" : "困難"}</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Difficulty: {difficulty === 1 ? "Easy" : difficulty === 2 ? "Medium" : "Hard"}</label>
                         <input
                             type="range" min="1" max="3" step="1"
                             value={difficulty}
@@ -451,11 +451,11 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
                     </div>
 
                     <div style={{ marginBottom: '1.5rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>自訂情境（選填）</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Custom Context (optional)</label>
                         <textarea
                             value={scenarioContext}
                             onChange={(e) => setScenarioContext(e.target.value)}
-                            placeholder="例如：專注於實際應用，或扮演面試官..."
+                            placeholder="e.g. Focus on practical applications, or act as an interviewer..."
                             style={{
                                 width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border)',
                                 borderRadius: '0.5rem', color: 'var(--text-primary)', padding: '0.75rem',
@@ -466,10 +466,10 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
 
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <button className="btn-primary" style={{ flex: 1 }} onClick={() => { setIsScenarioActive(true); generateQuestion(); }}>
-                            開始情境測驗
+                            Start Scenario Quiz
                         </button>
                         <button className="btn-secondary" onClick={() => setQuizType('def-to-term')}>
-                            取消
+                            Cancel
                         </button>
                     </div>
                 </div>
@@ -490,11 +490,11 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
 
                     <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto' }}>
                         <button className="btn-secondary" onClick={handleFinish} style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}>
-                            結束並總結
+                            Finish & Summary
                         </button>
-                        <button onClick={toggleQuizType} className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} title="切換測驗方向">
+                        <button onClick={toggleQuizType} className="btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} title="Toggle quiz direction">
                             <ArrowLeftRight size={14} />
-                            {quizType === 'def-to-term' ? "測驗模式：詞彙" : quizType === 'term-to-def' ? "測驗模式：定義" : "測驗模式：情境"}
+                            {quizType === 'def-to-term' ? "Mode: Terms" : quizType === 'term-to-def' ? "Mode: Definitions" : "Mode: Scenario"}
                         </button>
                     </div>
                 </div>
@@ -504,13 +504,13 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
                         {quizType !== 'scenario' && (
                             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: useAI ? 'var(--accent)' : 'var(--text-secondary)' }}>
                                 <input type="checkbox" checked={useAI} onChange={(e) => setUseAI(e.target.checked)} />
-                                <Sparkles size={14} /> AI 干擾選項
+                                <Sparkles size={14} /> AI Distractors
                             </label>
                         )}
 
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: autoNext ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                             <input type="checkbox" checked={autoNext} onChange={(e) => setAutoNext(e.target.checked)} />
-                            <FastForward size={14} /> 自動下一題
+                            <FastForward size={14} /> Auto Next
                         </label>
                     </div>
                 </div>
@@ -523,7 +523,7 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
                 paddingLeft: quizType === 'scenario' ? '0.625rem' : undefined,
                 paddingRight: quizType === 'scenario' ? '0.625rem' : undefined
             }}>
-                {currentCard ? headerText : "載入中..."}
+                {currentCard ? headerText : "Loading..."}
 
 
                 {countdown !== null && (
@@ -532,8 +532,8 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
                         display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 12
                     }}>
                         <div style={{ fontSize: '3rem', fontWeight: 'bold' }}>{countdown}</div>
-                        <div>下一題倒數...</div>
-                        <button onClick={handleManualNext} style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: 'white', color: 'black', borderRadius: '0.5rem' }}>跳過等待</button>
+                        <div>Next question in...</div>
+                        <button onClick={handleManualNext} style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: 'white', color: 'black', borderRadius: '0.5rem' }}>Skip</button>
                     </div>
                 )}
             </div>
@@ -542,7 +542,7 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
                 {(isLoadingAI && (!currentCard || (quizType === 'scenario' && !scenarioData))) ? (
                     <div style={{ gridColumn: '1 / -1', padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
                         <Loader2 className="spin" style={{ animation: 'spin 1s linear infinite' }} />
-                        <p>產生情境中...</p>
+                        <p>Generating scenario...</p>
                     </div>
                 ) : (
                     options.map((option, index) => {
@@ -575,11 +575,11 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
                     <button className="btn-primary" onClick={handleManualNext} disabled={isLoadingAI} style={{ minWidth: '180px' }}>
                         {isLoadingAI ? (
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                                <Loader2 className="spin" size={18} /> 產生中...
+                                <Loader2 className="spin" size={18} /> Generating...
                             </div>
                         ) : (
                             <>
-                                {autoNext ? "下一題（自動）" : "下一題"} <ArrowRight size={18} style={{ marginLeft: '0.5rem', verticalAlign: 'middle' }} />
+                                {autoNext ? "Next (auto)" : "Next"} <ArrowRight size={18} style={{ marginLeft: '0.5rem', verticalAlign: 'middle' }} />
                             </>
                         )}
                     </button>

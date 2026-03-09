@@ -110,7 +110,7 @@ export default function RecallMode({ cards }: RecallModeProps) {
             const data: ChatCompletionResponse = await response!.json();
             setAiHint(data.choices[0].message.content);
         } catch {
-            setAiHint("無法產生提示。");
+            setAiHint("Could not generate hint.");
         } finally {
             setLoadingHint(false);
         }
@@ -132,7 +132,7 @@ export default function RecallMode({ cards }: RecallModeProps) {
 
         // Allow empty submission -> immediate fail
         if (!userAnswer.trim()) {
-            setFeedback({ score: 0, correct: false, message: "未提供答案。" });
+            setFeedback({ score: 0, correct: false, message: "No answer provided." });
             setScoreHistory(prev => [...prev, 0]);
             return;
         }
@@ -240,7 +240,7 @@ export default function RecallMode({ cards }: RecallModeProps) {
 
         } catch (err) {
             console.error(err);
-            setFeedback({ score: 0, correct: false, message: "評分發生錯誤，請再試一次。" });
+            setFeedback({ score: 0, correct: false, message: "Grading error. Please try again." });
         } finally {
             setIsGrading(false);
         }
@@ -251,11 +251,11 @@ export default function RecallMode({ cards }: RecallModeProps) {
         const answer = mode === 'def-to-term' ? currentCard.term : currentCard.definition;
         if (hintLevel === 1) return answer.substring(0, 3) + "...";
         if (hintLevel === 2) return answer.substring(0, 7) + "...";
-        if (hintLevel === 3) return loadingHint ? "思考中..." : (aiHint || "");
+        if (hintLevel === 3) return loadingHint ? "Thinking..." : (aiHint || "");
         return "";
     };
 
-    if (!currentCard) return <div style={{ padding: '2rem' }}>載入中...</div>;
+    if (!currentCard) return <div style={{ padding: '2rem' }}>Loading...</div>;
 
     const questionText = mode === 'def-to-term' ? currentCard.definition : currentCard.term;
     const avgScore = scoreHistory.length > 0 ? Math.round(scoreHistory.reduce((a, b) => a + b, 0) / scoreHistory.length) : 0;
@@ -265,22 +265,22 @@ export default function RecallMode({ cards }: RecallModeProps) {
 
             {/* Stats Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', padding: '0 1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                <div>平均相符度：<strong style={{ color: avgScore > 80 ? 'var(--success)' : 'var(--text-primary)' }}>{avgScore}%</strong></div>
+                <div>Avg. Match: <strong style={{ color: avgScore > 80 ? 'var(--success)' : 'var(--text-primary)' }}>{avgScore}%</strong></div>
                 <button
                     className="btn-secondary"
                     onClick={() => setMode(m => m === 'def-to-term' ? 'term-to-def' : 'def-to-term')}
                     style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                    title="切換回想方向"
+                    title="Toggle recall direction"
                 >
                     <ArrowLeftRight size={14} />
-                    {mode === 'def-to-term' ? "回想：詞彙" : "回想：定義"}
+                    {mode === 'def-to-term' ? "Recall: Terms" : "Recall: Definitions"}
                 </button>
             </div>
 
             {/* Question Card */}
             <div className="recall-card">
                 <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--accent)', marginBottom: '1rem' }}>
-                    {mode === 'def-to-term' ? "定義" : "詞彙"}
+                    {mode === 'def-to-term' ? "DEFINITION" : "TERM"}
                 </span>
                 <div style={{ fontSize: '1.25rem', whiteSpace: 'pre-wrap' }}>
                     {questionText}
@@ -302,7 +302,7 @@ export default function RecallMode({ cards }: RecallModeProps) {
                         whiteSpace: 'pre-wrap',
                         boxSizing: 'border-box'
                     }}
-                    placeholder={mode === 'def-to-term' ? "輸入詞彙..." : "輸入定義..."}
+                    placeholder={mode === 'def-to-term' ? "Type the term..." : "Type the definition..."}
                     value={userAnswer}
                     onChange={(e) => setUserAnswer(e.target.value)}
                     disabled={!!feedback || isGrading}
@@ -324,7 +324,7 @@ export default function RecallMode({ cards }: RecallModeProps) {
                                 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: hintLevel >= 3 ? 0.5 : 1 }}
                             >
                                 <Lightbulb size={16} />
-                                {hintLevel === 0 ? "顯示提示" : hintLevel === 1 ? "更多提示" : "最多提示"}
+                                {hintLevel === 0 ? "Show Hint" : hintLevel === 1 ? "More Hint" : "Max Hint"}
                             </button>
 
                             {hintLevel >= 1 && (
@@ -340,7 +340,7 @@ export default function RecallMode({ cards }: RecallModeProps) {
                             disabled={isGrading}
                             style={{ minWidth: '120px' }}
                         >
-                            {isGrading ? <Loader2 className="spin" size={20} /> : (userAnswer.trim() ? "送出" : "我不知道")}
+                            {isGrading ? <Loader2 className="spin" size={20} /> : (userAnswer.trim() ? "Submit" : "I Don't Know")}
                         </button>
                     </div>
                 )}
@@ -359,20 +359,20 @@ export default function RecallMode({ cards }: RecallModeProps) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                         <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: feedback.correct ? 'var(--success)' : 'var(--error)' }}>
                             {feedback.correct ? <CheckCircle2 /> : <XCircle />}
-                            {feedback.correct ? "正確！" : "不錯的嘗試"}
+                            {feedback.correct ? "Correct!" : "Nice Try"}
                         </h3>
-                        <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{feedback.score}% 相符</span>
+                        <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{feedback.score}% Match</span>
                     </div>
 
                     <p style={{ marginBottom: '1rem' }}>{feedback.message}</p>
 
                     <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>
-                        <strong>正確答案：</strong> {mode === 'def-to-term' ? currentCard.term : currentCard.definition}
+                        <strong>Correct Answer:</strong> {mode === 'def-to-term' ? currentCard.term : currentCard.definition}
                     </div>
 
                     <div style={{ textAlign: 'right', marginTop: '1.5rem' }}>
                         <button className="btn-primary" onClick={generateQuestion}>
-                            下一題 <ArrowRight size={18} style={{ marginLeft: '0.5rem', verticalAlign: 'middle' }} />
+                            Next <ArrowRight size={18} style={{ marginLeft: '0.5rem', verticalAlign: 'middle' }} />
                         </button>
                     </div>
                 </div>

@@ -37,11 +37,11 @@ export default function FlashcardMode({ cards: rawCards }: FlashcardModeProps) {
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>
-                    第 {currentIndex + 1} 張 / 共 {deck.length} 張
+                    {currentIndex + 1} / {deck.length}
                 </span>
                 <button className="btn-secondary" onClick={handleShuffle} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
                     <Shuffle size={14} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                    洗牌
+                    Shuffle
                 </button>
             </div>
 
@@ -59,7 +59,7 @@ export default function FlashcardMode({ cards: rawCards }: FlashcardModeProps) {
                             color: 'var(--text-secondary)',
                             opacity: 0.5
                         }}>
-                            點擊翻轉
+                            Click to flip
                         </span>
                     </div>
                     <div className="flashcard-back">

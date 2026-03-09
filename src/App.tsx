@@ -49,7 +49,7 @@ function App() {
                   padding: '0.25rem 0', fontFamily: 'inherit'
                 }}
               >
-                建立
+                Create
               </button>
               <button
                 onClick={() => setMode('study')}
@@ -61,7 +61,7 @@ function App() {
                   padding: '0.25rem 0', fontFamily: 'inherit'
                 }}
               >
-                學習
+                Study
               </button>
             </nav>
           )}

@@ -39,7 +39,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
     };
 
     const handleClear = () => {
-        if (window.confirm("確定要清除詞彙框嗎？")) {
+        if (window.confirm("Are you sure you want to clear the text?")) {
             setText('');
             localStorage.removeItem('flashcards_input_text');
         }
@@ -100,7 +100,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
                 }
 
                 if (splitIndex === -1) {
-                    throw new Error(`第 ${index + 1} 行缺少分隔符號（| 或 ,）：「${line}」`);
+                    throw new Error(`Line ${index + 1} is missing a delimiter (| or ,): "${line}"`);
                 }
 
                 const clean = (s: string) => s.trim().replace(/^(['"])(.*)\1$/, '$2');
@@ -108,13 +108,13 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
                 const definition = clean(line.substring(splitIndex + 1));
 
                 if (!term || !definition) {
-                    throw new Error(`第 ${index + 1} 行的詞彙或定義為空。`);
+                    throw new Error(`Line ${index + 1} has an empty term or definition.`);
                 }
                 cards.push({ id: Math.random().toString(36).substr(2, 9), term, definition });
             });
 
             if (cards.length === 0) {
-                throw new Error("找不到有效的卡片。");
+                throw new Error("No valid cards found.");
             }
 
             onSave(cards);
@@ -126,14 +126,14 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
 
     const generateFlashcards = async () => {
         if (!text.trim()) {
-            setError("請輸入要產生卡片的文字。");
+            setError("Please enter text to generate cards from.");
             return;
         }
 
         const apiKey = apiConfig.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY;
         // If still no key and using OpenAI, error. OpenRouter might use free env key.
         if (!apiKey && apiConfig.provider === 'openai') {
-            setError("請在設定中輸入您的 OpenAI API 金鑰。");
+            setError("Please enter your OpenAI API key in Settings.");
             setShowSettings(true);
             return;
         }
@@ -206,7 +206,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
 
             if (!response.ok) {
                 const errorText = await response.text();
-                let message = "擷取失敗";
+                let message = "Fetch failed";
                 try {
                     const errData = JSON.parse(errorText);
                     message = errData.error?.message || message;
@@ -215,9 +215,9 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
                 }
 
                 if (response.status === 401) {
-                    throw new Error("API 金鑰無效，請在設定中檢查您的金鑰。");
+                    throw new Error("Invalid API key. Please check your key in Settings.");
                 }
-                throw new Error(`${message}（狀態：${response.status}）`);
+                throw new Error(`${message} (status: ${response.status})`);
             }
 
             const data: ChatCompletionResponse = await response.json();
@@ -230,9 +230,9 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
 
         } catch (err) {
             if ((err as Error).message.includes("Failed to fetch")) {
-                setError("連線失敗。您在設定中有有效的 API 金鑰嗎？");
+                setError("Connection failed. Do you have a valid API key in Settings?");
             } else {
-                setError("AI 產生失敗：" + (err as Error).message);
+                setError("AI generation failed: " + (err as Error).message);
             }
         } finally {
             setIsLoading(false);
@@ -241,13 +241,13 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
 
     const generateTermsOnly = async () => {
         if (!context.trim()) {
-            setError("請在選填情境欄位中輸入主題以產生詞彙（例如「生物學 101」）。");
+            setError("Please enter a topic in the context field to generate terms (e.g. \"Biology 101\").");
             return;
         }
 
         const apiKey = apiConfig.apiKey || import.meta.env.VITE_OPENROUTER_API_KEY;
         if (!apiKey && apiConfig.provider === 'openai') {
-            setError("請在設定中輸入您的 OpenAI API 金鑰。");
+            setError("Please enter your OpenAI API key in Settings.");
             setShowSettings(true);
             return;
         }
@@ -292,9 +292,9 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
             if (!response.ok) {
                 const errorText = await response.text();
                 if (response.status === 401) {
-                    throw new Error("API 金鑰無效，請在設定中檢查您的金鑰。");
+                    throw new Error("Invalid API key. Please check your key in Settings.");
                 }
-                throw new Error(`產生失敗（狀態：${response.status}）。${errorText.substring(0, 100)}`);
+                throw new Error(`Generation failed (status: ${response.status}). ${errorText.substring(0, 100)}`);
             }
 
             const data: ChatCompletionResponse = await response.json();
@@ -305,7 +305,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
 
         } catch (err) {
             if ((err as Error).message.includes("Failed to fetch")) {
-                setError("連線失敗。您在設定中有有效的 API 金鑰嗎？");
+                setError("Connection failed. Do you have a valid API key in Settings?");
             } else {
                 setError((err as Error).message);
             }
@@ -314,13 +314,13 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
         }
     };
 
-    const placeholderCSV = `光合作用,植物將光能轉化為化學能的過程
-DNA,去氧核糖核酸，攜帶遺傳資訊的分子
-有絲分裂,細胞核分裂為兩個相同的子核`;
+    const placeholderCSV = `Photosynthesis,The process by which plants convert light energy into chemical energy
+DNA,Deoxyribonucleic acid that carries genetic information
+Mitosis,Cell division resulting in two identical daughter nuclei`;
 
-    const placeholderAI = `在這裡貼上您的學習筆記！例如：
+    const placeholderAI = `Paste your study notes here! For example:
 
-文藝復興時期是歐洲的文化重生運動，起源於十四世紀的義大利。達文西和米開朗基羅是這個時期最著名的藝術家。`;
+The Renaissance was a cultural rebirth movement in Europe, originating in 14th-century Italy. Leonardo da Vinci and Michelangelo were the most famous artists of this period.`;
 
     return (
         <div className="input-container">
@@ -329,10 +329,10 @@ DNA,去氧核糖核酸，攜帶遺傳資訊的分子
                     <button
                         onClick={() => setShowSettings(!showSettings)}
                         className="btn-secondary action-btn"
-                        title="AI 設定"
+                        title="AI Settings"
                     >
                         <Settings size={14} />
-                        <span className="btn-text">設定</span>
+                        <span className="btn-text">Settings</span>
                     </button>
                     <label className={`ai-toggle ${useAI ? 'active' : ''}`}>
                         <input
@@ -346,14 +346,14 @@ DNA,去氧核糖核酸，攜帶遺傳資訊的分子
                         />
                         <Sparkles size={12} className="ai-icon" />
                         <span className="ai-label">
-                            使用 AI 產生
+                            AI Generate
                         </span>
                     </label>
                 </div>
                 {!useAI && (
                     <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.5rem' }}>
                         <AlertCircle size={12} />
-                        注意：關閉 AI 將停用回想模式和干擾選項產生功能。
+                        Note: Disabling AI will disable Recall mode and AI distractor generation.
                     </div>
                 )}
             </div>
@@ -367,10 +367,10 @@ DNA,去氧核糖核酸，攜帶遺傳資訊的分子
                     marginBottom: '1rem',
                     textAlign: 'left'
                 }}>
-                    <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1rem' }}>AI 設定</h3>
+                    <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1rem' }}>AI Settings</h3>
 
                     <div style={{ marginBottom: '1rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>API 金鑰（儲存於瀏覽器）</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>API Key (stored in browser)</label>
                         <input
                             type="password"
                             value={apiConfig.apiKey}
@@ -379,12 +379,12 @@ DNA,去氧核糖核酸，攜帶遺傳資訊的分子
                             style={{ width: '100%', padding: '0.5rem', borderRadius: '0.25rem', background: 'var(--bg-primary)', color: 'white', border: '1px solid var(--border)' }}
                         />
                         <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                            您的金鑰儲存在瀏覽器中，並直接傳送至 OpenRouter API。
+                            Your key is stored in the browser and sent directly to the OpenRouter API.
                         </p>
                     </div>
 
                     <div style={{ marginBottom: '0.5rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>模型</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Model</label>
                         <select
                             value={apiConfig.model}
                             onChange={(e) => updateApiConfig({ model: e.target.value })}
@@ -405,7 +405,7 @@ DNA,去氧核糖核酸，攜帶遺傳資訊的分子
                 <div style={{ marginBottom: '1rem' }}>
                     <input
                         type="text"
-                        placeholder="選填情境（例如「生物學 101」、「日本歷史」）"
+                        placeholder="Optional context (e.g. &quot;Biology 101&quot;, &quot;Japanese History&quot;)"
                         maxLength={100}
                         value={context}
                         onChange={(e) => setContext(e.target.value)}
@@ -425,14 +425,14 @@ DNA,去氧核糖核酸，攜帶遺傳資訊的分子
                         {context.length}/100
                     </div>
                     <p style={{ color: 'var(--text-secondary)', marginTop: '1rem', marginBottom: '0' }}>
-                        在下方貼上您的筆記、文章或摘要，AI 將為您擷取詞彙。
+                        Paste your notes, articles, or summaries below and AI will extract terms for you.
                     </p>
                 </div>
             )}
 
             <div style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
                 <p style={{ marginBottom: '0.5rem' }}>
-                    <span>在下方貼上您的詞彙，每行一個，以逗號分隔：<code>詞彙,定義</code></span>
+                    <span>Paste your terms below, one per line, separated by comma: <code>Term,Definition</code></span>
                 </p>
             </div>
 
@@ -474,10 +474,10 @@ DNA,去氧核糖核酸，攜帶遺傳資訊的分子
                     className="btn-secondary"
                     onClick={handleClear}
                     style={{ color: 'var(--error)', borderColor: 'var(--error)', padding: '0.5rem 1rem' }}
-                    title="清除所有文字"
+                    title="Clear all text"
                 >
                     <Trash2 size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
-                    清除
+                    Clear
                 </button>
 
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'flex-end', flex: 1 }}>
@@ -487,19 +487,19 @@ DNA,去氧核糖核酸，攜帶遺傳資訊的分子
                             onClick={generateTermsOnly}
                             disabled={isLoading}
                         >
-                            產生詞彙
+                            Generate Terms
                         </button>
                     )}
                     <button className="btn-primary" onClick={handleSave} disabled={isLoading}>
                         {isLoading ? (
                             <>
                                 <Loader2 size={18} className="spin" style={{ marginRight: '0.5rem', verticalAlign: 'middle', animation: 'spin 1s linear infinite' }} />
-                                產生中...
+                                Generating...
                             </>
                         ) : (
                             <>
                                 {useAI ? <Sparkles size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} /> : <Save size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />}
-                                {useAI ? "產生並開始" : "建立閃卡"}
+                                {useAI ? "Generate & Start" : "Create Cards"}
                             </>
                         )}
                     </button>
@@ -508,7 +508,7 @@ DNA,去氧核糖核酸，攜帶遺傳資訊的分子
 
             {isLoading && useAI && (
                 <div style={{ marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem', fontStyle: 'italic' }}>
-                    產生閃卡應該不會超過 30 秒，視新增數量而定...
+                    Generating flashcards should take no more than 30 seconds...
                 </div>
             )}
 
