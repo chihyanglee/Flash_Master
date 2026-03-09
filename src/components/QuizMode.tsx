@@ -407,7 +407,7 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
                 </button>
                 <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)' }}>
                     <h2 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Sparkles color="var(--accent-primary)" /> AI 學習總結
+                        <Sparkles color="var(--accent)" /> AI 學習總結
                     </h2>
                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', padding: '1rem', background: 'var(--bg-primary)', borderRadius: '0.5rem' }}>
                         <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>正確：{correctCount}</span>
@@ -434,7 +434,7 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
             <div className="quiz-container" style={{ maxWidth: '600px', margin: '0 auto' }}>
                 <div style={{ background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem', border: '1px solid var(--border)', textAlign: 'left' }}>
                     <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 0 }}>
-                        <Sparkles color="var(--accent-primary)" /> 情境模式設定
+                        <Sparkles color="var(--accent)" /> 情境模式設定
                     </h2>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
                         AI 將根據您的卡片組產生實際情境題目。

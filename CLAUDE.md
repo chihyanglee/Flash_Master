@@ -77,10 +77,10 @@ State management uses React useState with prop drilling (no Redux/Context).
 
 ### Styling
 
-CSS variables in index.css define the theme:
-- `--bg-dark: #0f172a` (slate-900 base)
-- `--accent-primary: #8b5cf6` (violet highlights)
-- `--accent-gradient` (indigo to violet gradient)
+CSS variables in index.css define the theme (monochrome + teal accent):
+- `--bg-primary: #0a0a0a` (near-black base)
+- `--accent: #5eead4` (muted teal for interactive elements)
+- Semantic colors: `--success` / `--error` for correct/wrong feedback only
 
 Mobile breakpoint: 640px
 
@@ -91,4 +91,4 @@ Mobile breakpoint: 640px
 - QuizMode has two question types: definition-to-term and term-to-definition
 - Scenario mode uses 3-5 random cards with difficulty levels (Easy/Medium/Hard)
 - RecallMode has 3-stage hints: first 3 chars, first 7 chars, then AI-generated hint
-- Available AI models are defined in InputSection.tsx validModels array (lines 49-56)
+- Available AI models are defined in the `validModels` array in `InputSection.tsx`
