@@ -409,7 +409,7 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
                     <h2 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Sparkles color="var(--accent-primary)" /> AI 學習總結
                     </h2>
-                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', padding: '1rem', background: 'var(--bg-primary)', borderRadius: '0.5rem' }}>
                         <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>正確：{correctCount}</span>
                         <span style={{ color: 'var(--error)', fontWeight: 'bold' }}>錯誤：{wrongCount}</span>
                         <span>總計：{history.length}</span>
@@ -446,7 +446,7 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
                             type="range" min="1" max="3" step="1"
                             value={difficulty}
                             onChange={(e) => setDifficulty(parseInt(e.target.value))}
-                            style={{ width: '100%', accentColor: 'var(--accent-primary)' }}
+                            style={{ width: '100%', accentColor: 'var(--accent)' }}
                         />
                     </div>
 
@@ -455,9 +455,9 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
                         <textarea
                             value={scenarioContext}
                             onChange={(e) => setScenarioContext(e.target.value)}
-                            placeholder="例如：專注於雲端安全，或扮演面試官..."
+                            placeholder="例如：專注於實際應用，或扮演面試官..."
                             style={{
-                                width: '100%', background: 'var(--bg-dark)', border: '1px solid var(--border)',
+                                width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border)',
                                 borderRadius: '0.5rem', color: 'var(--text-primary)', padding: '0.75rem',
                                 minHeight: '80px', fontFamily: 'inherit'
                             }}
@@ -482,17 +482,11 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1rem' }}>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div className="quiz-score desktop-only">
-                        <span className="score-item correct">
-                            <span className="score-label">正確：</span>
-                            <span className="score-value">{correctCount}</span>
-                        </span>
-                        <span className="score-separator"> / </span>
-                        <span className="score-item wrong">
-                            <span className="score-label">錯誤：</span>
-                            <span className="score-value">{wrongCount}</span>
-                        </span>
-                    </div>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                        <span style={{ color: 'var(--success)' }}>{correctCount}</span>
+                        {' / '}
+                        <span style={{ color: 'var(--error)' }}>{wrongCount}</span>
+                    </span>
 
                     <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto' }}>
                         <button className="btn-secondary" onClick={handleFinish} style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}>
@@ -505,22 +499,10 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                    <div className="quiz-score mobile-only">
-                        <span className="score-item correct">
-                            <span className="score-label">正確：</span>
-                            <span className="score-value">{correctCount}</span>
-                        </span>
-                        <span className="score-separator"> / </span>
-                        <span className="score-item wrong">
-                            <span className="score-label">錯誤：</span>
-                            <span className="score-value">{wrongCount}</span>
-                        </span>
-                    </div>
-
+                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem' }}>
                     <div style={{ display: 'flex', gap: '1rem', marginLeft: 'auto' }}>
                         {quizType !== 'scenario' && (
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: useAI ? 'var(--accent-primary)' : 'var(--text-secondary)' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: useAI ? 'var(--accent)' : 'var(--text-secondary)' }}>
                                 <input type="checkbox" checked={useAI} onChange={(e) => setUseAI(e.target.checked)} />
                                 <Sparkles size={14} /> AI 干擾選項
                             </label>
@@ -546,7 +528,7 @@ export default function QuizMode({ cards: rawCards }: QuizModeProps) {
 
                 {countdown !== null && (
                     <div style={{
-                        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', borderRadius: '1rem',
+                        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', borderRadius: '1rem',
                         display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 12
                     }}>
                         <div style={{ fontSize: '3rem', fontWeight: 'bold' }}>{countdown}</div>
