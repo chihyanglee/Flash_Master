@@ -1,78 +1,51 @@
-# ⚡ FlashMaster - Premium AI Flashcard App
+# FlashMaster
 
-A modern, dark-mode flashcard application designed for serious study. Features AI-powered content generation, adaptive quizzes, and game modes.
+A minimal, AI-powered flashcard app for studying any subject. Features smart content generation, adaptive quizzes, and active recall with AI grading.
 
 ## Features
 
-### 1. Input & Generation 
-- **AI-Powered Creation**:
-  - **Generate Terms**: Extract terms/definitions from raw notes or articles.
-  - **Smart Context**: Add topics (e.g. "CISSP Domain 1") to guide the AI.
-  - **CSV Support**: Outputs clean `Term,Definition` format.
-- **Robust Editor**: 
-  - Line numbers and scroll syncing.
-  - Supports both Pipe (`|`) and Comma (`,`) delimiters.
-  - **Local API Key**: Your key is stored securely in your browser's local storage (never on our servers).
+### Input & Generation
+- **AI-Powered Creation**: Extract terms and definitions from raw notes or articles
+- **Smart Context**: Add topic context to guide AI generation
+- **CSV Support**: Outputs clean `Term,Definition` format with pipe (`|`) and comma (`,`) delimiter support
+- **Local API Key**: Stored in browser localStorage, never sent to any server
 
-### 2. Study Modes
-- **Flashcards**: Beautiful 3D flip animations with shuffle and navigation controls.
-- **Quiz Mode**:
-    - **Smart Distractors**: AI generates *plausible but wrong* answers from the same domain.
-    - **Scenario Mode**:
-        - **AI-Generated Cases**: Creates complex, situational questions based on 3-5 random cards.
-        - **Custom Context**: Priority-based context guiding the AI (e.g. "Focus on management decisions").
-        - **Dynamic Difficulty**: (Easy, Medium, Hard) scales the logic and distractor plausibility.
-        - **In-Place Rationale**: Replacing the question with a concise 50-word explanation of *why* the answer is correct and why distractors fail.
-    - **Auto Next**: Speed flow optimized with seamless state transitions.
-- **Match Mode**:
-    - A memory game grid with **7 pairs** (14 tiles).
-    - **True Shuffle**: Unbiased randomization every game.
-- **Recall Mode**:
-    - **Active Recall**: Type the answer manually for maximum retention.
-    - **Progressive Hints** (3-Stage):
-        - Level 1: First 3 letters.
-        - Level 2: First 7 letters.
-        - Level 3: **AI Max Hint** (Vague conceptual clue).
-    - **Smart Grading**: AI scores your answer 0-100% based on meaning.
-    - **"I Don't Know"**: Skip option that marks the card as incorrect (0% score).
-    - **True Randomization**: Uses a shuffled deck system so you see every card once before repeats.
+### Study Modes
 
-### 3. Premium UI
-- **Dark Mode**: sleek `slate-900` theme with violet/indigo accents.
-- **Responsive**: Works on desktop and mobile.
-- **Feature Gating**: Disabling AI cleanly locks advanced features like Recall Mode.
+**Flashcards** — 3D flip cards with shuffle and keyboard navigation
+
+**Quiz Mode**
+- AI-generated plausible distractors from the same domain
+- Scenario mode: situational questions from 3-5 random cards with difficulty scaling (Easy/Medium/Hard)
+- In-place rationale explaining why the answer is correct
+- Auto-advance for speed flow
+
+**Recall Mode** (requires AI)
+- Type answers manually for active recall
+- Progressive 3-stage hints: first 3 chars, first 7 chars, then AI-generated clue
+- AI grading scores answers 0-100% based on semantic similarity
+- Shuffled deck ensures every card appears before repeats
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v18+)
-- An API Key from [OpenRouter](https://openrouter.ai/) (optional, but required for AI features).
+- Node.js v18+
+- pnpm
+- API key from [OpenRouter](https://openrouter.ai/) or OpenAI (optional, required for AI features)
 
 ### Installation
 
-1. **Clone the repository** (or unzip):
-   ```bash
-   cd "CISSP Quiz"
-   ```
+```bash
+git clone <repo-url> && cd Flash_Master
+pnpm install
+pnpm dev
+```
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Run the App**:
-   ```bash
-   npm run dev
-   ```
-   Open the link shown (usually `http://localhost:5173`).
-
-4. **Configure API Key**:
-   - Click the **Settings** ⚙️ icon in the top right.
-   - Enter your OpenRouter or OpenAI API Key.
-   - It will be saved securely in your browser.
+Open `http://localhost:5173`, then configure your API key in the Settings panel.
 
 ## Tech Stack
-- **Vite + React**: Blazing fast frontend.
-- **OpenRouter API**: Intelligence layer.
-- **Lucide React**: Iconography.
-- **CSS3**: Variables, Flexbox, Grid, and 3D Transforms.
+
+- React 19 + TypeScript + Vite
+- OpenRouter / OpenAI API
+- Lucide React icons
+- CSS custom properties with monochrome + teal accent theme
