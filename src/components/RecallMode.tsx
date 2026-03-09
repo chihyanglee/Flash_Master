@@ -279,7 +279,7 @@ export default function RecallMode({ cards }: RecallModeProps) {
 
             {/* Question Card */}
             <div className="recall-card">
-                <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--accent-primary)', marginBottom: '1rem' }}>
+                <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--accent)', marginBottom: '1rem' }}>
                     {mode === 'def-to-term' ? "定義" : "詞彙"}
                 </span>
                 <div style={{ fontSize: '1.25rem', whiteSpace: 'pre-wrap' }}>
@@ -328,7 +328,7 @@ export default function RecallMode({ cards }: RecallModeProps) {
                             </button>
 
                             {hintLevel >= 1 && (
-                                <span style={{ color: 'var(--accent-primary)', fontStyle: 'italic', animation: 'fadeIn 0.3s', maxWidth: '200px', textAlign: 'left', fontSize: '0.9rem' }}>
+                                <span style={{ color: 'var(--accent)', fontStyle: 'italic', animation: 'fadeIn 0.3s', maxWidth: '200px', textAlign: 'left', fontSize: '0.9rem' }}>
                                     {getHintText()}
                                 </span>
                             )}
@@ -349,9 +349,9 @@ export default function RecallMode({ cards }: RecallModeProps) {
             {/* AI Grading Feedback */}
             {feedback && (
                 <div style={{
-                    background: feedback.correct ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    background: feedback.correct ? 'rgba(74, 222, 128, 0.05)' : 'rgba(248, 113, 113, 0.05)',
                     border: `1px solid ${feedback.correct ? 'var(--success)' : 'var(--error)'}`,
-                    borderRadius: '1rem',
+                    borderRadius: '0.75rem',
                     padding: '1.5rem',
                     textAlign: 'left',
                     animation: 'fadeIn 0.3s ease'
@@ -366,7 +366,7 @@ export default function RecallMode({ cards }: RecallModeProps) {
 
                     <p style={{ marginBottom: '1rem' }}>{feedback.message}</p>
 
-                    <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem' }}>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>
                         <strong>正確答案：</strong> {mode === 'def-to-term' ? currentCard.term : currentCard.definition}
                     </div>
 

@@ -1,21 +1,23 @@
 :root {
-  --bg-dark: #0f172a;
-  --bg-card: #1e293b;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --accent-primary: #8b5cf6;
-  --accent-hover: #7c3aed;
-  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-  --success: #22c55e;
-  --error: #ef4444;
-  --border: #334155;
-  --font-family: 'Inter', system-ui, sans-serif;
+  --bg-primary: #0a0a0a;
+  --bg-card: #141414;
+  --bg-hover: #1a1a1a;
+  --text-primary: #fafafa;
+  --text-secondary: #737373;
+  --text-muted: #525252;
+  --accent: #5eead4;
+  --accent-hover: #2dd4bf;
+  --accent-subtle: rgba(94, 234, 212, 0.1);
+  --success: #4ade80;
+  --error: #f87171;
+  --border: #262626;
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--bg-dark);
+  background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-family);
   -webkit-font-smoothing: antialiased;
@@ -23,10 +25,10 @@ body {
 }
 
 #root {
-  max-width: 1200px;
+  max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 1.5rem;
+  text-align: left;
 }
 
 button {
@@ -38,21 +40,19 @@ button {
 
 /* Utilities */
 .btn-primary {
-  background: var(--accent-gradient);
-  color: white;
+  background: var(--accent);
+  color: #0a0a0a;
   padding: 0.75rem 1.5rem;
   border-radius: 0.5rem;
   font-weight: 600;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  background: var(--accent-hover);
 }
 
 .btn-secondary {
-  background: var(--bg-card);
+  background: transparent;
   color: var(--text-primary);
   border: 1px solid var(--border);
   padding: 0.75rem 1.5rem;
@@ -61,7 +61,7 @@ button {
 }
 
 .btn-secondary:hover {
-  background: #334155;
+  background: var(--bg-hover);
 }
 
 /* Visibility Utilities */
@@ -106,7 +106,7 @@ button {
 }
 
 .input-area:focus {
-  outline: 2px solid var(--accent-primary);
+  outline: 2px solid var(--accent);
   border-color: transparent;
 }
 
@@ -115,7 +115,7 @@ button {
   perspective: 1000px;
   width: 100%;
   max-width: 600px;
-  height: 350px;
+  height: 300px;
   margin: 2rem auto;
   cursor: pointer;
 }
@@ -125,7 +125,7 @@ button {
   width: 100%;
   height: 100%;
   text-align: center;
-  transition: transform 0.6s;
+  transition: transform 0.4s;
   transform-style: preserve-3d;
 }
 
@@ -148,7 +148,7 @@ button {
   justify-content: center;
   padding: 2rem;
   box-sizing: border-box;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 .flashcard-front {
@@ -159,61 +159,9 @@ button {
 
 .flashcard-back {
   transform: rotateY(180deg);
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  background: var(--bg-card);
   font-size: 1.25rem;
   line-height: 1.6;
-}
-
-/* Match Game Grid */
-.match-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.match-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  padding: 1rem;
-  min-height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  user-select: none;
-}
-
-.match-card:hover {
-  background: #334155;
-  transform: scale(1.02);
-}
-
-.match-card.selected {
-  border-color: var(--accent-primary);
-  background: rgba(139, 92, 246, 0.1);
-  box-shadow: 0 0 0 2px var(--accent-primary);
-}
-
-.match-card.matched {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.8);
-}
-
-@media (max-width: 640px) {
-  .match-card.matched {
-    display: none !important;
-  }
-}
-
-.match-card.errors {
-  border-color: var(--error);
-  background: rgba(239, 68, 68, 0.1);
-  animation: shake 0.5s;
 }
 
 @keyframes shake {
@@ -235,11 +183,11 @@ button {
 /* Tabs */
 .tabs {
   display: flex;
-  justify-content: center;
-  gap: 1rem;
+  justify-content: flex-start;
+  gap: 2rem;
   margin-bottom: 2rem;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 1rem;
+  padding-bottom: 0;
 }
 
 .tab {
@@ -249,13 +197,21 @@ button {
   background: transparent;
   color: var(--text-secondary);
   font-size: 1rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  padding: 0.75rem 0;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+}
+
+.tab.active {
+  background: transparent;
+  color: var(--text-primary);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
 }
 
 @media (max-width: 640px) {
   .app-main {
-    padding-bottom: 80px !important;
+    padding-bottom: 72px !important;
   }
 
   .tabs {
@@ -276,63 +232,51 @@ button {
   .tab {
     flex-direction: column;
     padding: 0.25rem 0.5rem;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     border: none;
     border-radius: 0;
     gap: 0.25rem;
+    border-bottom: none;
   }
 
   .tab.active {
-    color: var(--accent-primary);
-    background: transparent;
-    /* Remove desktop active bg */
+    color: var(--accent) !important;
+    background: transparent !important;
+    border-bottom: none;
   }
 }
 
-.tab.active {
-  background: var(--bg-card);
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.mobile-only-tab {
-  display: none !important;
-}
-
 .quiz-options-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .quiz-option {
   display: block;
   width: 100%;
   text-align: left;
-  padding: 1rem;
+  padding: 1rem 1.25rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   color: var(--text-primary);
   word-break: break-word;
-  /* Enforce wrapping for long words */
   overflow-wrap: break-word;
-  height: 100%;
-  /* Ensure equal height in the same row */
 }
 
 .quiz-option:hover {
-  background: #334155;
+  background: var(--bg-hover);
 }
 
 .quiz-option.correct {
-  border-color: var(--success);
-  background: rgba(34, 197, 94, 0.1);
+  border-left: 3px solid var(--success);
+  background: rgba(74, 222, 128, 0.05);
 }
 
 .quiz-option.wrong {
-  border-color: var(--error);
-  background: rgba(239, 68, 68, 0.1);
+  border-left: 3px solid var(--error);
+  background: rgba(248, 113, 113, 0.05);
 }
 
 /* Markdown Content Styles */
@@ -345,7 +289,7 @@ button {
 .markdown-content h3 {
   margin-top: 1rem;
   margin-bottom: 0.5rem;
-  color: var(--accent-primary);
+  color: var(--text-primary);
 }
 
 .markdown-content p {
@@ -363,7 +307,7 @@ button {
 }
 
 .markdown-content strong {
-  color: var(--success);
+  color: var(--accent);
 }
 
 /* Mobile Optimizations */
@@ -382,7 +326,7 @@ button {
   align-items: center;
   gap: 0.3rem;
   text-decoration: none;
-  color: white;
+  color: var(--text-primary);
   padding: 0.3rem 0.6rem;
   font-size: 0.6rem;
 }
@@ -394,7 +338,7 @@ button {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  color: white;
+  color: var(--text-primary);
   padding: 0.3rem 0.6rem;
   font-size: 0.6rem;
 }
@@ -412,21 +356,16 @@ button {
     align-items: center;
     gap: 0.5rem;
     padding-top: 2rem;
-    /* Reduced from 3rem to move logo higher */
   }
 
-  /* Position buttons in corners or top row on mobile */
   .header-github {
     display: none !important;
-    /* Hide header github on mobile */
   }
 
   .header-back {
     display: none !important;
-    /* Hide back button in header on mobile */
   }
 
-  /* Compact button for mobile */
   .btn-primary {
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
@@ -434,21 +373,17 @@ button {
 
   .input-area {
     font-size: 16px;
-    /* Prevent IOS zoom on focus */
   }
 
-  /* Mobile Action Bar Optimizations */
   .action-bar {
     justify-content: space-between;
     width: 100%;
     flex-wrap: nowrap !important;
-    /* Force one row */
     gap: 0.25rem !important;
   }
 
   .help-btn .btn-text {
     display: none;
-    /* Icon only for help */
   }
 
   .action-btn {
@@ -468,7 +403,6 @@ button {
     font-size: 0.7rem !important;
   }
 
-  /* Reduce global padding on mobile */
   #root {
     padding: 0 !important;
   }
@@ -479,7 +413,6 @@ button {
 
   .input-container {
     padding: 0 0.5rem !important;
-    /* 50% of 1rem side padding */
   }
 }
 
@@ -490,7 +423,6 @@ button {
   flex-wrap: wrap;
   justify-content: flex-end;
   width: 100%;
-  /* Ensure it spans full width so 'margin-right: auto' can push items left */
 }
 
 .action-btn {
@@ -502,10 +434,9 @@ button {
 }
 
 .action-btn svg {
-  color: white;
+  color: var(--text-primary);
 }
 
-/* Only set specific button text color if needed, otherwise inherit */
 .btn-text {
   font-size: 0.75rem;
 }
@@ -524,12 +455,12 @@ button {
 }
 
 .ai-toggle.active {
-  background: rgba(139, 92, 246, 0.2);
-  border-color: var(--accent-primary);
+  background: var(--accent-subtle);
+  border-color: var(--accent);
 }
 
 .ai-toggle input {
-  accent-color: var(--accent-primary);
+  accent-color: var(--accent);
 }
 
 .ai-icon {
@@ -537,7 +468,7 @@ button {
 }
 
 .ai-toggle.active .ai-icon {
-  color: var(--accent-primary);
+  color: var(--accent);
 }
 
 .ai-label {
@@ -547,7 +478,7 @@ button {
 }
 
 .ai-toggle.active .ai-label {
-  color: var(--accent-primary);
+  color: var(--accent);
 }
 
 /* App Main Container */
@@ -569,10 +500,10 @@ button {
   margin-right: auto;
 }
 
-/* Mobile Bottom Nav Overrides (Moved to end for precendence) */
+/* Mobile Bottom Nav Overrides */
 @media (max-width: 640px) {
   .app-main {
-    padding-bottom: 80px !important;
+    padding-bottom: 72px !important;
   }
 
   .tabs {
@@ -593,19 +524,17 @@ button {
   .tab {
     flex-direction: column;
     padding: 0.25rem 0.5rem;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     border: none;
     border-radius: 0;
     gap: 0.25rem;
+    border-bottom: none;
   }
 
   .tab.active {
-    color: var(--accent-primary) !important;
+    color: var(--accent) !important;
     background: transparent !important;
-  }
-
-  .mobile-only-tab {
-    display: flex !important;
+    border-bottom: none;
   }
 }
 
@@ -650,14 +579,14 @@ button {
 .recall-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   padding: 2rem;
   margin-bottom: 2rem;
   min-height: 200px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 @media (max-width: 640px) {
@@ -673,11 +602,9 @@ button {
   position: relative;
   width: 100%;
   min-height: 250px;
-  /* Increased from 200px */
   margin-bottom: 2rem;
   height: auto;
   font-size: 1.5rem;
-  /* Increased from 1.2rem */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -686,54 +613,43 @@ button {
   white-space: pre-wrap;
   word-break: break-word;
   padding: 2.5rem;
-  /* Increased from 2rem */
   box-sizing: border-box;
   overflow-y: auto;
   max-height: 500px;
-  /* Increased from 400px */
 
-  /* Restored Visual Styles */
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 1rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-radius: 0.75rem;
+  box-shadow: none;
   color: var(--text-primary);
 }
 
 /* Base Option Style (Quiz) */
 .quiz-option {
   font-size: 1rem;
-  /* Reduced from 1.1rem */
 }
 
 /* Mobile Font Adjustments for Quiz Mode */
 @media (max-width: 640px) {
 
-  /* Mode: Quiz Terms (Terms are answers) */
   .quiz-mode-def-to-term .quiz-option {
     font-size: 1.1rem !important;
-    /* Increase selection font */
   }
 
-  /* Mode: Quiz Definitions (Defs are answers) */
   .quiz-mode-term-to-def .quiz-card {
     font-size: 1.6rem !important;
-    /* Slightly reduced font for the term */
     min-height: 120px !important;
-    /* Reduced height of the card */
     padding: 1rem !important;
-    /* Reduced padding */
     font-weight: 700;
   }
 
   .quiz-mode-term-to-def .quiz-option {
     font-size: 1rem !important;
-    /* Increase selection (Definition) font slightly if needed, or keep standard readable size */
     line-height: 1.4;
   }
 
   .quiz-options-grid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .header-tagline {
@@ -742,7 +658,6 @@ button {
 
   .app-header {
     padding-top: 0.1rem !important;
-    /* Move logo aggressively higher */
     margin-bottom: 0.25rem !important;
   }
 
@@ -765,11 +680,10 @@ button {
 
 .footer-github {
   display: none;
-  /* Hidden by default on desktop, shown on mobile if desired */
   align-items: center;
   gap: 0.3rem;
   text-decoration: none;
-  color: white !important;
+  color: var(--text-primary) !important;
   padding: 0.5rem 1rem;
   font-size: 0.8rem;
 }
@@ -777,6 +691,5 @@ button {
 @media (min-width: 641px) {
   .footer-github {
     display: none !important;
-    /* Ensure hidden on desktop if header one exists */
   }
 }

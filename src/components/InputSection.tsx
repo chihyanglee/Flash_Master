@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Save, AlertCircle, Sparkles, Loader2, Settings, HelpCircle, Trash2 } from 'lucide-react';
+import { Save, AlertCircle, Sparkles, Loader2, Settings, Trash2 } from 'lucide-react';
 import type { InputSectionProps, Flashcard, APIConfig, ChatCompletionResponse } from '../types';
 
 export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabled }: InputSectionProps) {
@@ -10,7 +10,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
     const [error, setError] = useState<string | null>(null);
     const [useAI, setUseAI] = useState(initialAiEnabled || false);
     const [isLoading, setIsLoading] = useState(false);
-    const [showHelp, setShowHelp] = useState(false);
+
 
     // Save to local storage whenever text or context changes
     useEffect(() => {
@@ -71,13 +71,6 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
     }, []);
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const lineNumbersRef = useRef<HTMLDivElement>(null);
-
-    const handleScroll = () => {
-        if (textareaRef.current && lineNumbersRef.current) {
-            lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
-        }
-    };
 
     const handleSave = () => {
         try {
@@ -248,7 +241,7 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
 
     const generateTermsOnly = async () => {
         if (!context.trim()) {
-            setError("請在選填情境欄位中輸入主題以產生詞彙（例如「CISSP 領域 1」）。");
+            setError("請在選填情境欄位中輸入主題以產生詞彙（例如「生物學 101」）。");
             return;
         }
 
@@ -321,26 +314,18 @@ export default function InputSection({ onSave, onAiEnabledChange, initialAiEnabl
         }
     };
 
-    const placeholderCSV = `CIA 三元組,機密性、完整性、可用性
-AES,進階加密標準
-雙因素驗證,您知道的東西加上您擁有的東西`;
+    const placeholderCSV = `光合作用,植物將光能轉化為化學能的過程
+DNA,去氧核糖核酸，攜帶遺傳資訊的分子
+有絲分裂,細胞核分裂為兩個相同的子核`;
 
     const placeholderAI = `在這裡貼上您的學習筆記！例如：
 
-安全模型對於 CISSP 非常重要。Bell-LaPadula 模型專注於機密性，具有「不可向上讀取、不可向下寫入」的規則。而 Biba 則專注於完整性。`;
+文藝復興時期是歐洲的文化重生運動，起源於十四世紀的義大利。達文西和米開朗基羅是這個時期最著名的藝術家。`;
 
     return (
         <div className="input-container">
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginBottom: '1rem' }}>
                 <div className="action-bar">
-                    <button
-                        onClick={() => setShowHelp(true)}
-                        className="btn-secondary action-btn help-btn"
-                        title="使用說明"
-                    >
-                        <HelpCircle size={14} />
-                        <span className="btn-text">說明</span>
-                    </button>
                     <button
                         onClick={() => setShowSettings(!showSettings)}
                         className="btn-secondary action-btn"
@@ -366,60 +351,12 @@ AES,進階加密標準
                     </label>
                 </div>
                 {!useAI && (
-                    <div style={{ fontSize: '0.7rem', color: 'orange', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.5rem' }}>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.5rem' }}>
                         <AlertCircle size={12} />
                         注意：關閉 AI 將停用回想模式和干擾選項產生功能。
                     </div>
                 )}
             </div>
-
-            {/* Help Modal */}
-            {showHelp && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.8)', zIndex: 1000,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
-                }}>
-                    <div style={{
-                        background: 'var(--bg-card)', padding: '2rem', borderRadius: '1rem',
-                        maxWidth: '500px', width: '100%', border: '1px solid var(--border)',
-                        position: 'relative', maxHeight: '90vh', overflowY: 'auto'
-                    }}>
-                        <h3 style={{ marginTop: 0 }}>如何使用閃卡大師</h3>
-                        <div style={{ lineHeight: 1.6, color: 'var(--text-secondary)', textAlign: 'left' }}>
-                            <p style={{ marginBottom: '1.5rem' }}>
-                                閃卡大師旨在幫助您使用自訂閃卡、測驗和配對遊戲有效率地學習。
-                            </p>
-
-                            <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1rem' }}>1. 手動模式</h4>
-                            <ul style={{ paddingLeft: '1.5rem', marginBottom: '1.5rem', marginTop: 0 }}>
-                                <li><strong>輸入格式：</strong>每行輸入一個詞彙和定義，以逗號（或管道符號 `|`）分隔。</li>
-                                <li><strong>範例：</strong> <code>詞彙, 定義</code></li>
-                                <li><strong>開始：</strong>點擊「建立閃卡」立即開始學習。</li>
-                            </ul>
-
-                            <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1rem' }}>2. AI 產生模式</h4>
-                            <p style={{ marginBottom: '0.5rem' }}>
-                                利用 AI 從原始文字自動產生學習材料。
-                            </p>
-                            <ul style={{ paddingLeft: '1.5rem', marginBottom: '0', marginTop: 0 }}>
-                                <li><strong>啟用：</strong>切換頂部的「使用 AI 產生」開關。</li>
-                                <li><strong>情境：</strong>可選擇添加主題（例如「CISSP 領域 1」）來引導產生。</li>
-                                <li><strong>輸入：</strong>將您的筆記、識別碼或摘要文字貼到主要文字區。</li>
-                                <li><strong>產生：</strong>點擊「產生詞彙」以填充清單供審閱，或點擊「產生並開始」立即開始。</li>
-                                <li><strong>回想模式：</strong>啟用 AI 可解鎖回想模式，這是一種更進階的測試方法。</li>
-                            </ul>
-                        </div>
-                        <button
-                            className="btn-primary"
-                            style={{ marginTop: '2rem', width: '100%' }}
-                            onClick={() => setShowHelp(false)}
-                        >
-                            了解！
-                        </button>
-                    </div>
-                </div>
-            )}
 
             {showSettings && (
                 <div style={{
@@ -439,7 +376,7 @@ AES,進階加密標準
                             value={apiConfig.apiKey}
                             onChange={(e) => updateApiConfig({ apiKey: e.target.value })}
                             placeholder="sk-or-..."
-                            style={{ width: '100%', padding: '0.5rem', borderRadius: '0.25rem', background: '#0f172a', color: 'white', border: '1px solid var(--border)' }}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: '0.25rem', background: 'var(--bg-primary)', color: 'white', border: '1px solid var(--border)' }}
                         />
                         <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
                             您的金鑰儲存在瀏覽器中，並直接傳送至 OpenRouter API。
@@ -451,7 +388,7 @@ AES,進階加密標準
                         <select
                             value={apiConfig.model}
                             onChange={(e) => updateApiConfig({ model: e.target.value })}
-                            style={{ width: '100%', padding: '0.5rem', borderRadius: '0.25rem', background: '#0f172a', color: 'white', border: '1px solid var(--border)' }}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: '0.25rem', background: 'var(--bg-primary)', color: 'white', border: '1px solid var(--border)' }}
                         >
                             <option value="openai/gpt-oss-120b">GPT OSS 120B</option>
                             <option value="qwen/qwen3-vl-235b-a22b-instruct">Qwen3 VL 235B</option>
@@ -468,7 +405,7 @@ AES,進階加密標準
                 <div style={{ marginBottom: '1rem' }}>
                     <input
                         type="text"
-                        placeholder="選填情境（例如「CISSP 領域 1」、「生物學 101」）"
+                        placeholder="選填情境（例如「生物學 101」、「日本歷史」）"
                         maxLength={100}
                         value={context}
                         onChange={(e) => setContext(e.target.value)}
@@ -502,7 +439,7 @@ AES,進階加密標準
             {error && (
                 <div style={{
                     background: 'rgba(239, 68, 68, 0.1)',
-                    color: '#ef4444',
+                    color: 'var(--error)',
                     padding: '1rem',
                     borderRadius: '0.5rem',
                     marginBottom: '1rem',
@@ -516,54 +453,27 @@ AES,進階加密標準
                 </div>
             )}
 
-            <div style={{ position: 'relative', display: 'flex', border: '1px solid var(--border)', borderRadius: '0.75rem', overflow: 'hidden', minHeight: '300px', background: 'var(--bg-card)' }}>
-                <div
-                    ref={lineNumbersRef}
-                    className="line-numbers"
-                    style={{
-                        padding: '1rem 0.5rem',
-                        background: '#0f172a',
-                        color: 'var(--text-secondary)',
-                        textAlign: 'right',
-                        fontFamily: 'monospace',
-                        fontSize: '0.9rem',
-                        lineHeight: '1.5',
-                        minWidth: '3rem',
-                        userSelect: 'none',
-                        overflow: 'hidden',
-                        opacity: 0.6
-                    }}
-                >
-                    {text.split('\n').map((_, i) => (
-                        <div key={i}>{i + 1}</div>
-                    ))}
-                    {/* Always show at least row 1 */}
-                    {text === '' && <div>1</div>}
-                </div>
-                <textarea
-                    ref={textareaRef}
-                    className="input-area"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    onScroll={handleScroll}
-                    placeholder={useAI ? placeholderAI : placeholderCSV}
-                    disabled={isLoading}
-                    style={{
-                        border: 'none',
-                        borderRadius: 0,
-                        resize: 'none',
-                        lineHeight: '1.5',
-                        flex: 1,
-                        outline: 'none'
-                    }}
-                />
-            </div>
+            <textarea
+                ref={textareaRef}
+                className="input-area"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder={useAI ? placeholderAI : placeholderCSV}
+                disabled={isLoading}
+                style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    minHeight: '300px',
+                    lineHeight: '1.6',
+                    resize: 'vertical'
+                }}
+            />
 
             <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                 <button
                     className="btn-secondary"
                     onClick={handleClear}
-                    style={{ color: '#ef4444', borderColor: '#ef4444', padding: '0.5rem 1rem' }}
+                    style={{ color: 'var(--error)', borderColor: 'var(--error)', padding: '0.5rem 1rem' }}
                     title="清除所有文字"
                 >
                     <Trash2 size={18} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />

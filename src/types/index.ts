@@ -19,14 +19,6 @@ export type QuizType = 'def-to-term' | 'term-to-def' | 'scenario';
 
 export type RecallMode = 'def-to-term' | 'term-to-def';
 
-// Match mode types
-export interface MatchTile {
-  id: string;
-  cardId: string;
-  content: string;
-  type: 'term' | 'def';
-}
-
 // Recall mode types
 export interface RecallFeedback {
   score: number;
@@ -70,7 +62,7 @@ export interface InputSectionProps {
 
 export interface StudyDashboardProps {
   cards: Flashcard[];
-  onBack: () => void;
+  onBack?: () => void;
   aiEnabled: boolean;
 }
 
@@ -79,10 +71,6 @@ export interface FlashcardModeProps {
 }
 
 export interface QuizModeProps {
-  cards: Flashcard[];
-}
-
-export interface MatchModeProps {
   cards: Flashcard[];
 }
 
